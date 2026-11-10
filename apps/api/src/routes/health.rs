@@ -1,12 +1,12 @@
-use axum::{Json, extract::{Extension, State}, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Extension, State},
+    http::StatusCode,
+};
 use serde::Serialize;
 use urp_kernel::KernelError;
 
-use crate::{
-    errors::ApiError,
-    middleware::RequestTrace,
-    state::AppState,
-};
+use crate::{errors::ApiError, middleware::RequestTrace, state::AppState};
 
 #[derive(Serialize)]
 pub struct HealthResponse {
@@ -32,8 +32,7 @@ pub async fn ready(
         })),
         Err(error) => {
             tracing::error!(%error, request_id = %trace.request_id, "database readiness check failed");
-            Err(ApiError::from_kernel(KernelError::Unavailable)
-                .with_request_id(trace.request_id))
+            Err(ApiError::from_kernel(KernelError::Unavailable).with_request_id(trace.request_id))
         }
     }
 }

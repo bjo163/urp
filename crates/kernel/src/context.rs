@@ -31,7 +31,9 @@ impl Locale {
             && value.split('-').all(|part| {
                 !part.is_empty()
                     && part.len() <= 8
-                    && part.chars().all(|character| character.is_ascii_alphanumeric())
+                    && part
+                        .chars()
+                        .all(|character| character.is_ascii_alphanumeric())
             });
 
         if valid {
@@ -208,7 +210,10 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(KernelError::Validation { field: "branch_id", .. })
+            Err(KernelError::Validation {
+                field: "branch_id",
+                ..
+            })
         ));
     }
 

@@ -4,8 +4,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
-use uuid::Uuid;
 use urp_kernel::KernelError;
+use uuid::Uuid;
 
 /// Stable JSON error response returned by the HTTP application.
 #[derive(Debug, Serialize)]
@@ -139,8 +139,8 @@ impl IntoResponse for ApiError {
 mod tests {
     use axum::{body::to_bytes, response::IntoResponse};
     use serde_json::Value;
-    use uuid::Uuid;
     use urp_kernel::KernelError;
+    use uuid::Uuid;
 
     use super::ApiError;
 

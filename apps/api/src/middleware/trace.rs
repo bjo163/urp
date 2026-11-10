@@ -24,8 +24,8 @@ pub struct RequestTrace {
 /// Incoming IDs are tracing metadata only; they never establish identity, tenant,
 /// company or authorization context.
 pub async fn attach_trace_context(mut request: Request<Body>, next: Next) -> Response {
-    let request_id = parse_uuid_header(request.headers().get(REQUEST_ID_HEADER))
-        .unwrap_or_else(Uuid::new_v4);
+    let request_id =
+        parse_uuid_header(request.headers().get(REQUEST_ID_HEADER)).unwrap_or_else(Uuid::new_v4);
     let correlation_id =
         parse_uuid_header(request.headers().get(CORRELATION_ID_HEADER)).unwrap_or(request_id);
 
@@ -36,16 +36,14 @@ pub async fn attach_trace_context(mut request: Request<Body>, next: Next) -> Res
 
     let mut response = next.run(request).await;
     if let Ok(value) = HeaderValue::from_str(&request_id.to_string()) {
-        response.headers_mut().insert(
-            HeaderName::from_static(REQUEST_ID_HEADER),
-            value,
-        );
+        response
+            .headers_mut()
+            .insert(HeaderName::from_static(REQUEST_ID_HEADER), value);
     }
     if let Ok(value) = HeaderValue::from_str(&correlation_id.to_string()) {
-        response.headers_mut().insert(
-            HeaderName::from_static(CORRELATION_ID_HEADER),
-            value,
-        );
+        response
+            .headers_mut()
+            .insert(HeaderName::from_static(CORRELATION_ID_HEADER), value);
     }
 
     response
