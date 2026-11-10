@@ -29,6 +29,11 @@ const REGISTERED_MIGRATIONS: &[Migration] = &[
         name: "0002_transactional_outbox",
         sql: include_str!("../../../../migrations/postgres/0002_transactional_outbox.sql"),
     },
+    Migration {
+        version: 3,
+        name: "0003_user_identity",
+        sql: include_str!("../../../../migrations/postgres/0003_user_identity.sql"),
+    },
 ];
 
 /// Applies pending PostgreSQL migrations, or returns a read-only dry-run plan.
@@ -172,6 +177,7 @@ mod tests {
     use std::env;
 
     use sqlx::{Row, postgres::PgPoolOptions};
+    use uuid::Uuid;
 
     use super::{
         Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate, run_with_migrations,
@@ -234,6 +240,7 @@ mod tests {
                 sql: "SELECT 1",
             },
             REGISTERED_MIGRATIONS[1],
+            REGISTERED_MIGRATIONS[2],
         ];
         let mismatch = run_with_migrations(&pool, &altered_migrations, false).await;
         assert!(matches!(
@@ -246,6 +253,77 @@ mod tests {
             .await?;
         let ledger_count: i64 = ledger_row.try_get("count")?;
         assert_eq!(ledger_count, REGISTERED_MIGRATIONS.len() as i64);
+
+        let user_id = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO urp_users (user_id, display_name, status) VALUES ($1, $2, 'active')",
+        )
+        .bind(user_id)
+        .bind("Alice Example")
+        .execute(&pool)
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO urp_auth_identities (identity_id, user_id, provider_key, login_normalized, email_normalized, email_verified) VALUES ($1, $2, 'local', 'alice', 'alice@example.test', TRUE)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(user_id)
+        .execute(&pool)
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO urp_user_credentials (user_id, hash_scheme, hash_version, encoded_hash) VALUES ($1, 'argon2id', 1, '$argon2id$v=19$m=65536,t=3,p=1$c2FsdA$aGFzaA')",
+        )
+        .bind(user_id)
+        .execute(&pool)
+        .await?;
+
+        let duplicate_login_user = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO urp_users (user_id, display_name, status) VALUES ($1, 'Second User', 'active')",
+        )
+        .bind(duplicate_login_user)
+        .execute(&pool)
+        .await?;
+        let duplicate_login = sqlx::query(
+            "INSERT INTO urp_auth_identities (identity_id, user_id, provider_key, login_normalized) VALUES ($1, $2, 'local', 'alice')",
+        )
+        .bind(Uuid::new_v4())
+        .bind(duplicate_login_user)
+        .execute(&pool)
+        .await;
+        assert!(duplicate_login.is_err());
+
+        let duplicate_email = sqlx::query(
+            "INSERT INTO urp_auth_identities (identity_id, user_id, provider_key, provider_subject, login_normalized, email_normalized) VALUES ($1, $2, 'oidc', 'subject-2', 'alice-oidc', 'alice@example.test')",
+        )
+        .bind(Uuid::new_v4())
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+        assert!(duplicate_email.is_err());
+
+        let disabled_without_timestamp = sqlx::query(
+            "INSERT INTO urp_users (user_id, display_name, status) VALUES ($1, 'Invalid Disabled', 'disabled')",
+        )
+        .bind(Uuid::new_v4())
+        .execute(&pool)
+        .await;
+        assert!(disabled_without_timestamp.is_err());
+
+        let delete_user_with_identity = sqlx::query("DELETE FROM urp_users WHERE user_id = $1")
+            .bind(user_id)
+            .execute(&pool)
+            .await;
+        assert!(delete_user_with_identity.is_err());
+
+        sqlx::query("DROP TABLE urp_user_credentials")
+            .execute(&pool)
+            .await?;
+        sqlx::query("DROP TABLE urp_auth_identities")
+            .execute(&pool)
+            .await?;
+        sqlx::query("DROP TABLE urp_users").execute(&pool).await?;
 
         sqlx::query("DROP TABLE urp_platform_metadata")
             .execute(&pool)
