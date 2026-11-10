@@ -46,8 +46,22 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
+      postgres_outbox:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: urp_outbox_test
+          POSTGRES_USER: urp
+          POSTGRES_PASSWORD: urp_ci_only
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U urp -d urp_outbox_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     env:
       URP_MIGRATION_TEST_DATABASE_URL: postgresql://urp:urp_ci_only@localhost:5432/urp_migration_test
+      URP_OUTBOX_TEST_DATABASE_URL: postgresql://urp:urp_ci_only@localhost:5433/urp_outbox_test
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
