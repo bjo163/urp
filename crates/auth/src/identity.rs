@@ -31,9 +31,7 @@ impl IdentityProvider {
         if value.is_empty()
             || value.len() > 64
             || !value.bytes().all(|byte| {
-                byte.is_ascii_lowercase()
-                    || byte.is_ascii_digit()
-                    || matches!(byte, b'_' | b'-')
+                byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'_' | b'-')
             })
             || value
                 .chars()
@@ -93,9 +91,15 @@ impl fmt::Debug for AuthIdentity {
             .field("identity_id", &self.identity_id)
             .field("user_id", &self.user_id)
             .field("provider", &self.provider)
-            .field("provider_subject", &self.provider_subject.as_ref().map(|_| "[REDACTED]"))
+            .field(
+                "provider_subject",
+                &self.provider_subject.as_ref().map(|_| "[REDACTED]"),
+            )
             .field("login_normalized", &"[REDACTED]")
-            .field("email_normalized", &self.email_normalized.as_ref().map(|_| "[REDACTED]"))
+            .field(
+                "email_normalized",
+                &self.email_normalized.as_ref().map(|_| "[REDACTED]"),
+            )
             .field("email_verified", &self.email_verified)
             .field("status", &self.status)
             .finish()
