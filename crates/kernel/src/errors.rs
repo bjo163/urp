@@ -23,6 +23,12 @@ pub enum KernelError {
     /// The request requires an authenticated actor.
     #[error("authentication is required")]
     Unauthenticated,
+    /// The actor has exceeded an operation or resource rate limit.
+    #[error("request rate limit has been exceeded")]
+    RateLimited,
+    /// An unexpected internal failure occurred.
+    #[error("an internal error occurred")]
+    Internal,
     /// A required dependency is temporarily unavailable.
     #[error("a required dependency is unavailable")]
     Unavailable,
@@ -37,6 +43,8 @@ impl KernelError {
             Self::Conflict => "conflict",
             Self::Forbidden => "forbidden",
             Self::Unauthenticated => "unauthenticated",
+            Self::RateLimited => "rate_limited",
+            Self::Internal => "internal_error",
             Self::Unavailable => "unavailable",
         }
     }
@@ -50,5 +58,7 @@ mod tests {
     fn error_codes_are_stable() {
         assert_eq!(KernelError::NotFound.code(), "not_found");
         assert_eq!(KernelError::Forbidden.code(), "forbidden");
+        assert_eq!(KernelError::RateLimited.code(), "rate_limited");
+        assert_eq!(KernelError::Internal.code(), "internal_error");
     }
 }
