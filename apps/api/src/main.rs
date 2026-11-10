@@ -1,3 +1,5 @@
+//! URP HTTP API process and composition root.
+
 mod config;
 mod routes;
 mod state;
