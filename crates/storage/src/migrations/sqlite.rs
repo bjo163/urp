@@ -253,11 +253,14 @@ mod tests {
             Database::Postgres(_) => return Err("expected SQLite database".into()),
         };
 
-        let altered_migrations = [Migration {
-            version: 1,
-            name: "0001_platform_metadata",
-            sql: "SELECT 1",
-        }];
+        let altered_migrations = [
+            Migration {
+                version: 1,
+                name: "0001_platform_metadata",
+                sql: "SELECT 1",
+            },
+            REGISTERED_MIGRATIONS[1],
+        ];
         let mismatch = run_with_migrations(&pool, &altered_migrations, false).await;
         assert!(matches!(
             mismatch,
