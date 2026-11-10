@@ -106,7 +106,7 @@ impl EventEnvelope {
         if !valid_technical_name(&event_type, true) {
             return Err(OutboxError::InvalidEventType);
         }
-        if !valid_technical_name(&aggregate_type, false) {
+        if !valid_technical_name(&aggregate_type, true) {
             return Err(OutboxError::InvalidAggregateType);
         }
         if event_version == 0 || event_version > i16::MAX as u16 {
