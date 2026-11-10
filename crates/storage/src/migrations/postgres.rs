@@ -139,7 +139,8 @@ async fn run_with_migrations(
             let applied_checksum: String = row.try_get("checksum")?;
             verify_applied_migration(migration, &applied_name, &applied_checksum, &checksum)?;
         } else {
-            sqlx::query(migration.sql)
+            // Migration SQL is trusted, versioned source code. raw_sql is required for DDL scripts containing multiple statements.
+sqlx::raw_sql(migration.sql)
                 .execute(&mut *transaction)
                 .await?;
 
