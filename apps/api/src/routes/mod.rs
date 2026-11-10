@@ -16,6 +16,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/health/live", get(health::live))
         .route("/health/ready", get(health::ready))
+        .route("/api/v1", get(api_root))
         .nest("/api/v1", api)
         .fallback(not_found)
         .layer(TraceLayer::new_for_http())
@@ -99,7 +100,7 @@ mod tests {
     async fn api_root_exposes_versioned_contract() -> Result<(), Box<dyn std::error::Error>> {
         let app = test_router().await?;
         let response = app
-            .oneshot(Request::builder().uri("/api/v1/").body(Body::empty())?)
+            .oneshot(Request::builder().uri("/api/v1").body(Body::empty())?)
             .await?;
         assert_eq!(response.status(), StatusCode::OK);
         let bytes = to_bytes(response.into_body(), 4096).await?;
