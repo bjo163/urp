@@ -21,13 +21,14 @@ URP is a clean-room ERP platform inspired by the breadth and extensibility of Od
 3. [Engineering standards](docs/ENGINEERING_STANDARDS.md) — non-negotiable implementation and quality rules.
 4. [AI agent playbook](docs/AI_AGENT_PLAYBOOK.md) — how autonomous agents select, implement, test, and close tasks.
 5. [Roadmap](docs/ROADMAP.md) — scope and phase exit criteria.
-6. GitHub Issues — the executable work queue. An issue may implement only its explicitly stated scope.
+6. [Issue map](docs/ISSUE_MAP.md) — all epic/task ranges and execution order.
+7. GitHub Issues — the executable work queue. An issue may implement only its explicitly stated scope.
 
 When documents conflict, stop implementation and propose a focused documentation correction before changing code. Do not invent architecture in an implementation issue.
 
 ## Project status
 
-The repository is initialized from a greenfield baseline. Nothing is production-ready until the relevant issue acceptance criteria, automated checks, security review, and release gates have passed.
+The repository was initialized from a greenfield baseline. Nothing is production-ready until the relevant issue acceptance criteria, automated checks, security review, and release gates have passed.
 
 ## Quick links
 
@@ -36,6 +37,7 @@ The repository is initialized from a greenfield baseline. Nothing is production-
 - [Engineering standards](docs/ENGINEERING_STANDARDS.md)
 - [AI agent playbook](docs/AI_AGENT_PLAYBOOK.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Issue map](docs/ISSUE_MAP.md)
 - [Issue task template](.github/ISSUE_TEMPLATE/implementation-task.md)
 
 ## Non-goals
@@ -46,4 +48,4 @@ The repository is initialized from a greenfield baseline. Nothing is production-
 - Treating dynamic metadata as a substitute for typed financial and inventory invariants.
 - Shipping a visually radical interface at the expense of accessibility, clarity, or operational trust.
 
-See [LICENSE](LICENSE) before external distribution; licensing must be selected and approved in its dedicated governance task.
+**Licensing:** No redistribution license has been selected yet. Do not publish or distribute binaries/source bundles until [issue #2](https://github.com/bjo163/urp/issues/2) is approved and the decision is recorded.
