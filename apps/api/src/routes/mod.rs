@@ -27,13 +27,22 @@ async fn not_found(Extension(trace): Extension<RequestTrace>) -> ApiError {
     ApiError::not_found().with_request_id(trace.request_id)
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 struct ApiInfo {
     name: &'static str,
     version: &'static str,
     api_version: &'static str,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/",
+    tag = "platform",
+    responses(
+        (status = 200, description = "URP API information and version", body = ApiInfo),
+        (status = 404, description = "Route not found", body = crate::errors::ApiErrorEnvelope)
+    )
+)]
 async fn api_root() -> Json<ApiInfo> {
     Json(ApiInfo {
         name: "URP",
@@ -41,6 +50,42 @@ async fn api_root() -> Json<ApiInfo> {
         api_version: "v1",
     })
 }
+
+
+/// Canonical code-first OpenAPI description for the URP HTTP API.
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    info(
+        title = "URP API",
+        version = "0.1.0",
+        description = "Versioned HTTP API for the Universal Radical Platform."
+    ),
+    servers(
+        (url = "/", description = "URP API root")
+    ),
+    paths(
+        health::live,
+        health::ready,
+        api_root
+    ),
+    components(
+        schemas(
+            health::HealthResponse,
+            ApiInfo,
+            crate::errors::ApiErrorEnvelope,
+            crate::errors::ApiErrorDetail,
+            crate::errors::FieldError
+        ),
+        security_schemes(
+            ("bearerAuth" = (type = "http", scheme = "bearer", bearer_format = "JWT"))
+        )
+    ),
+    tags(
+        (name = "health", description = "Process and dependency health checks"),
+        (name = "platform", description = "Versioned platform information")
+    )
+)]
+pub struct ApiDoc;
 
 #[cfg(test)]
 mod tests {
@@ -67,6 +112,21 @@ mod tests {
             database,
             version: "0.1.0-test",
         }))
+    }
+
+    #[test]
+    fn openapi_document_contains_health_and_platform_paths() {
+        use utoipa::OpenApi;
+
+        let document = ApiDoc::openapi();
+        let value = serde_json::to_value(document);
+        assert!(value.is_ok());
+        let value = value.unwrap_or_default();
+        assert!(value["paths"].get("/health/live").is_some());
+        assert!(value["paths"].get("/health/ready").is_some());
+        assert!(value["paths"].get("/api/v1/").is_some());
+        assert!(value["components"]["schemas"].get("ApiErrorEnvelope").is_some());
+        assert!(value["components"]["securitySchemes"].get("bearerAuth").is_some());
     }
 
     #[tokio::test]
