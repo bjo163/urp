@@ -20,3 +20,6 @@ urp-storage = { path = "../../crates/storage" }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
