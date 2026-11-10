@@ -5,7 +5,7 @@
 - Git.
 - Rust 1.99.1 with rustfmt and clippy (installed through `rust-toolchain.toml`).
 - Node.js 26.x Active LTS.
-- pnpm 10.9.2.
+- pnpm 10.34.9.
 - Docker Engine + Docker Compose plugin for PostgreSQL.
 - A terminal that can run the commands below.
 
