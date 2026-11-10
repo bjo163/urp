@@ -22,6 +22,10 @@ const REGISTERED_MIGRATIONS: &[Migration] = &[Migration {
     version: 1,
     name: "0001_platform_metadata",
     sql: include_str!("../../../../migrations/postgres/0001_platform_metadata.sql"),
+}, Migration {
+    version: 2,
+    name: "0002_transactional_outbox",
+    sql: include_str!("../../../../migrations/postgres/0002_transactional_outbox.sql"),
 }];
 
 /// Applies pending PostgreSQL migrations, or returns a read-only dry-run plan.
@@ -234,7 +238,7 @@ mod tests {
             .fetch_one(&pool)
             .await?;
         let ledger_count: i64 = ledger_row.try_get("count")?;
-        assert_eq!(ledger_count, 1);
+        assert_eq!(ledger_count, REGISTERED_MIGRATIONS.len() as i64);
 
         sqlx::query("DROP TABLE urp_platform_metadata")
             .execute(&pool)
