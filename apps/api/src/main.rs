@@ -11,6 +11,7 @@ use std::{error::Error, net::SocketAddr};
 
 use tokio::net::TcpListener;
 use tracing_subscriber::EnvFilter;
+use utoipa::OpenApi;
 use urp_storage::{Database, DatabaseConfig};
 
 use crate::{config::ApiConfig, state::AppState};
