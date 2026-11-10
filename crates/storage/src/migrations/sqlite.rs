@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 
 use sqlx::{Row, SqlitePool};
-use uuid::Uuid;
 
 use super::{
     Migration, MigrationError, MigrationStatus, migration_checksum, validate_registry,
@@ -198,18 +197,24 @@ async fn check_sqlite_capabilities(pool: &SqlitePool) -> Result<(), MigrationErr
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs, path::PathBuf};
+    use std::{
+        env, fs,
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
 
-    use sqlx::{SqliteConnectOptions, SqlitePoolOptions};
-    use uuid::Uuid;
+    use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 
     use super::{Migration, REGISTERED_MIGRATIONS, check_sqlite_capabilities, run_with_migrations};
     use crate::{Database, DatabaseConfig, MigrationError};
 
     fn temporary_database_path() -> PathBuf {
+        static NEXT_DATABASE_ID: AtomicU64 = AtomicU64::new(1);
+        let sequence = NEXT_DATABASE_ID.fetch_add(1, Ordering::Relaxed);
         env::temp_dir().join(format!(
-            "urp_sqlite_migration_{}.db",
-            Uuid::new_v4().simple()
+            "urp_sqlite_migration_{}_{}.db",
+            std::process::id(),
+            sequence
         ))
     }
 

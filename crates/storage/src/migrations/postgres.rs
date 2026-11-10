@@ -1,10 +1,6 @@
 use std::collections::BTreeMap;
 
-use sqlx::{
-    Row,
-    postgres::{PgPool, PgPoolOptions},
-};
-use uuid::Uuid;
+use sqlx::{Row, postgres::PgPool};
 
 use super::{
     Migration, MigrationError, MigrationStatus, migration_checksum, validate_registry,
@@ -165,64 +161,15 @@ async fn run_with_migrations(
 
 #[cfg(test)]
 mod tests {
-    use std::{env, str::FromStr};
+    use std::env;
 
-    use sqlx::{
-        Row,
-        postgres::{PgConnectOptions, PgPool, PgPoolOptions},
-    };
-    use uuid::Uuid;
+    use sqlx::{Row, postgres::PgPoolOptions};
 
     use super::{
-        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate, run_with_migrations,
+        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate,
+        run_with_migrations,
     };
     use crate::MigrationError;
-
-    struct IsolatedDatabase {
-        admin_pool: PgPool,
-        pool: PgPool,
-        database_name: String,
-    }
-
-    impl IsolatedDatabase {
-        async fn create() -> Result<Option<Self>, Box<dyn std::error::Error>> {
-            let Ok(database_url) = env::var("DATABASE_URL") else {
-                return Ok(None);
-            };
-
-            let admin_options = PgConnectOptions::from_str(&database_url)?;
-            let admin_pool = PgPoolOptions::new()
-                .max_connections(2)
-                .connect_with(admin_options.clone())
-                .await?;
-
-            let database_name = format!("urp_migration_test_{}", Uuid::new_v4().simple());
-            let create_database = format!("CREATE DATABASE \"{database_name}\"");
-            sqlx::query(&create_database).execute(&admin_pool).await?;
-
-            let options = admin_options.database(&database_name);
-            let pool = PgPoolOptions::new()
-                .max_connections(4)
-                .connect_with(options)
-                .await?;
-
-            Ok(Some(Self {
-                admin_pool,
-                pool,
-                database_name,
-            }))
-        }
-
-        async fn close(self) -> Result<(), Box<dyn std::error::Error>> {
-            self.pool.close().await;
-            let drop_database = format!("DROP DATABASE \"{}\"", self.database_name);
-            sqlx::query(&drop_database)
-                .execute(&self.admin_pool)
-                .await?;
-            self.admin_pool.close().await;
-            Ok(())
-        }
-    }
 
     #[test]
     fn sha256_checksum_is_stable() {
@@ -241,22 +188,37 @@ mod tests {
         );
     }
 
+    /// Uses only the dedicated disposable CI/test database, never application DATABASE_URL.
     #[tokio::test]
     async fn postgres_migrations_support_dry_run_idempotency_and_checksum_detection()
     -> Result<(), Box<dyn std::error::Error>> {
-        let Some(database) = IsolatedDatabase::create().await? else {
+        let Ok(database_url) = env::var("URP_MIGRATION_TEST_DATABASE_URL") else {
             return Ok(());
         };
 
-        let dry_run = run_with_migrations(&database.pool, REGISTERED_MIGRATIONS, true).await?;
+        let pool = PgPoolOptions::new()
+            .max_connections(4)
+            .connect(&database_url)
+            .await?;
+
+        let ledger_exists: bool = sqlx::query_scalar(
+            "SELECT to_regclass('public.urp_schema_migrations') IS NOT NULL",
+        )
+        .fetch_one(&pool)
+        .await?;
+        if ledger_exists {
+            return Err("URP migration test database must be empty".into());
+        }
+
+        let dry_run = run_with_migrations(&pool, REGISTERED_MIGRATIONS, true).await?;
         assert!(!dry_run.is_empty());
         assert!(dry_run.iter().all(|migration| !migration.applied));
 
-        let first_run = postgres_migrate(&database.pool, false).await?;
+        let first_run = postgres_migrate(&pool, false).await?;
         assert!(!first_run.is_empty());
         assert!(first_run.iter().all(|migration| migration.applied));
 
-        let second_run = postgres_migrate(&database.pool, false).await?;
+        let second_run = postgres_migrate(&pool, false).await?;
         assert_eq!(second_run, first_run);
 
         let altered_migrations = [Migration {
@@ -264,19 +226,25 @@ mod tests {
             name: "0001_platform_metadata",
             sql: "SELECT 1",
         }];
-        let mismatch = run_with_migrations(&database.pool, &altered_migrations, false).await;
+        let mismatch = run_with_migrations(&pool, &altered_migrations, false).await;
         assert!(matches!(
             mismatch,
             Err(MigrationError::ChecksumMismatch { version: 1, .. })
         ));
 
         let ledger_row = sqlx::query("SELECT COUNT(*) AS count FROM urp_schema_migrations")
-            .fetch_one(&database.pool)
+            .fetch_one(&pool)
             .await?;
         let ledger_count: i64 = ledger_row.try_get("count")?;
         assert_eq!(ledger_count, 1);
 
-        database.close().await?;
+        sqlx::query("DROP TABLE urp_platform_metadata")
+            .execute(&pool)
+            .await?;
+        sqlx::query("DROP TABLE urp_schema_migrations")
+            .execute(&pool)
+            .await?;
+        pool.close().await;
         Ok(())
     }
 }
