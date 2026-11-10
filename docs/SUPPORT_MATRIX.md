@@ -9,16 +9,20 @@
 | Rust | 1.99.1 stable | Pinned in `rust-toolchain.toml`; Rust CI passed on the foundation branch |
 | Axum | 0.8.9 | Pinned in Cargo workspace dependencies |
 | SQLx | 0.9.0 | PostgreSQL and bundled SQLite drivers enabled; adapter tests are part of foundation/P02 |
-| Node.js | 26.x Active LTS | Selected primary runtime; web CI is being moved to Node 26 |
-| Node.js compatibility | 24.x Maintenance LTS | Secondary compatibility target; do not make new production installs depend on a superseded line |
-| Next.js | 16.4.6 App Router | Resolved by the committed web dependency manifest; web CI has passed on Node 24 |
+| Node.js | 26.x Active LTS | Selected primary runtime; web CI configuration uses Node 26 |
+| Node.js compatibility | 24.x Maintenance LTS | Not currently tested by URP CI; retained as a potential compatibility target only |
+| Next.js | 16.4.6 App Router | Resolved by the web dependency manifest; web CI runs on the selected Node 26 baseline |
 | React | 19.3.1 | Paired with the selected Next.js release |
-| TypeScript | 7.0.2 | Strict mode |
+| TypeScript | 6.0.3 | Strict mode, matching `apps/web/package.json` |
 | pnpm | 12.17.0 | Pinned in root `package.json` and CI |
 
 Node.js 26 entered Active LTS on 2026-10-28; Node.js 24 moved to Maintenance LTS on 2026-10-20. URP selects 26 as its primary runtime and retains 24 only as a compatibility target. See the [Node.js release schedule](https://github.com/nodejs/Release#release-schedule) and [Node.js release status](https://nodejs.org/en/about/previous-releases).
 
 Next.js 16.4.6 is the pinned App Router release in the current foundation dependency set. See the [Next.js 16.4 release notes](https://nextjs.org/blog/next-16-4) and [installation requirements](https://nextjs.org/docs/app/getting-started/installation).
+
+## Lockfile status
+
+The CI workflows currently generate and archive `Cargo.lock` and `pnpm-lock.yaml`, but neither lockfile is yet tracked on `main`. Issues [#6](https://github.com/bjo163/urp/issues/6) and [#7](https://github.com/bjo163/urp/issues/7) remain open until reviewed lockfiles are committed. CI must not be described as reproducible/frozen until that is complete.
 
 ## Database matrix
 
