@@ -238,7 +238,7 @@ mod tests {
             .fetch_one(&pool)
             .await?;
         let ledger_count: i64 = ledger_row.try_get("count")?;
-        assert_eq!(ledger_count, 1);
+        assert_eq!(ledger_count, REGISTERED_MIGRATIONS.len() as i64);
 
         sqlx::query("DROP TABLE urp_platform_metadata")
             .execute(&pool)
