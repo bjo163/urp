@@ -57,3 +57,8 @@ The roadmap is capability-based, not calendar-based. Phase boundaries describe p
 ## Scope control
 
 The catalog in the blueprint is the full product ambition. The GitHub task list decomposes the first implementation path and its extensibility points. A missing domain is not permission to add unrelated work to an active issue: create a new scoped issue under the correct domain epic and link the relevant blueprint section.
+
+
+## GitHub execution tracking
+
+The canonical, issue-numbered work breakdown lives in [ISSUE_MAP.md](ISSUE_MAP.md). Each phase epic contains a checklist linking every child task. Do not create parallel TODO lists that duplicate issue state. GitHub issue state and acceptance checkboxes are the execution source of truth.
