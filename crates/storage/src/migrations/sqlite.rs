@@ -217,6 +217,7 @@ mod tests {
     };
 
     use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+    use uuid::Uuid;
 
     use super::{Migration, REGISTERED_MIGRATIONS, check_sqlite_capabilities, run_with_migrations};
     use crate::{Database, DatabaseConfig, MigrationError};
@@ -265,12 +266,76 @@ mod tests {
                 sql: "SELECT 1",
             },
             REGISTERED_MIGRATIONS[1],
+            REGISTERED_MIGRATIONS[2],
         ];
         let mismatch = run_with_migrations(&pool, &altered_migrations, false).await;
         assert!(matches!(
             mismatch,
             Err(MigrationError::ChecksumMismatch { version: 1, .. })
         ));
+
+        let user_id = Uuid::new_v4().to_string();
+        sqlx::query(
+            "INSERT INTO urp_users (user_id, display_name, status) VALUES (?, ?, 'active')",
+        )
+        .bind(&user_id)
+        .bind("Alice Example")
+        .execute(&pool)
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO urp_auth_identities (identity_id, user_id, provider_key, login_normalized, email_normalized, email_verified) VALUES (?, ?, 'local', 'alice', 'alice@example.test', 1)",
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(&user_id)
+        .execute(&pool)
+        .await?;
+
+        sqlx::query(
+            "INSERT INTO urp_user_credentials (user_id, hash_scheme, hash_version, encoded_hash) VALUES (?, 'argon2id', 1, '$argon2id$v=19$m=65536,t=3,p=1$c2FsdA$aGFzaA')",
+        )
+        .bind(&user_id)
+        .execute(&pool)
+        .await?;
+
+        let duplicate_login_user = Uuid::new_v4().to_string();
+        sqlx::query(
+            "INSERT INTO urp_users (user_id, display_name, status) VALUES (?, 'Second User', 'active')",
+        )
+        .bind(&duplicate_login_user)
+        .execute(&pool)
+        .await?;
+        let duplicate_login = sqlx::query(
+            "INSERT INTO urp_auth_identities (identity_id, user_id, provider_key, login_normalized) VALUES (?, ?, 'local', 'alice')",
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(&duplicate_login_user)
+        .execute(&pool)
+        .await;
+        assert!(duplicate_login.is_err());
+
+        let duplicate_email = sqlx::query(
+            "INSERT INTO urp_auth_identities (identity_id, user_id, provider_key, provider_subject, login_normalized, email_normalized) VALUES (?, ?, 'oidc', 'subject-2', 'alice-oidc', 'alice@example.test')",
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(&user_id)
+        .execute(&pool)
+        .await;
+        assert!(duplicate_email.is_err());
+
+        let disabled_without_timestamp = sqlx::query(
+            "INSERT INTO urp_users (user_id, display_name, status) VALUES (?, 'Invalid Disabled', 'disabled')",
+        )
+        .bind(Uuid::new_v4().to_string())
+        .execute(&pool)
+        .await;
+        assert!(disabled_without_timestamp.is_err());
+
+        let delete_user_with_identity = sqlx::query("DELETE FROM urp_users WHERE user_id = ?")
+            .bind(&user_id)
+            .execute(&pool)
+            .await;
+        assert!(delete_user_with_identity.is_err());
 
         match database {
             Database::Sqlite(pool) => pool.close().await,
