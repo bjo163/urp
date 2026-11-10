@@ -54,6 +54,10 @@ pub struct ApiError {
 impl ApiError {
     /// Maps a kernel error to a stable HTTP status and public response.
     pub fn from_kernel(error: KernelError) -> Self {
+        if matches!(error, KernelError::Internal) {
+            return Self::internal();
+        }
+
         let (status, detail) = match error {
             KernelError::Validation { field, message } => (
                 StatusCode::BAD_REQUEST,
@@ -122,12 +126,8 @@ impl ApiError {
                     field_errors: None,
                 },
             ),
-            KernelError::Internal => Self::internal(),
+            KernelError::Internal => unreachable!("internal error returned above"),
         };
-
-        if matches!(error, KernelError::Internal) {
-            return detail;
-        }
 
         Self {
             status,
