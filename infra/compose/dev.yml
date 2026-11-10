@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    container_name: urp-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-urp_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-urp_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - urp_postgres_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-urp_dev} -d ${POSTGRES_DB:-urp_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - urp-dev
+
+volumes:
+  urp_postgres_dev:
+
+networks:
+  urp-dev:
+    driver: bridge

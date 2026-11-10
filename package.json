@@ -1,0 +1,23 @@
+{
+  "name": "urp",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.9.2",
+  "engines": {
+    "node": ">=26 <27",
+    "pnpm": "10.9.2"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @urp/web dev",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}
