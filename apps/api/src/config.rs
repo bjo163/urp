@@ -6,6 +6,9 @@ pub struct ApiConfig {
     pub database_max_connections: u32,
     pub port: u16,
     pub log_filter: String,
+    pub password_memory_kib: u32,
+    pub password_iterations: u32,
+    pub password_parallelism: u32,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -25,6 +28,9 @@ impl ApiConfig {
 
         let port = parse_positive_u16("API_PORT", 8080)?;
         let database_max_connections = parse_positive_u32("DATABASE_MAX_CONNECTIONS", 10)?;
+        let password_memory_kib = parse_positive_u32("PASSWORD_ARGON2_MEMORY_KIB", 19 * 1024)?;
+        let password_iterations = parse_positive_u32("PASSWORD_ARGON2_ITERATIONS", 2)?;
+        let password_parallelism = parse_positive_u32("PASSWORD_ARGON2_PARALLELISM", 1)?;
 
         let log_filter =
             env::var("RUST_LOG").unwrap_or_else(|_| "info,sqlx=warn,hyper=warn".to_owned());
@@ -34,6 +40,9 @@ impl ApiConfig {
             database_max_connections,
             port,
             log_filter,
+            password_memory_kib,
+            password_iterations,
+            password_parallelism,
         })
     }
 }
