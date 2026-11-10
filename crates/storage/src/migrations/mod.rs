@@ -1,8 +1,18 @@
 //! Explicit, versioned database migration contracts.
 
 mod postgres;
+mod sqlite;
 
+use sha2::{Digest, Sha256};
 use thiserror::Error;
+
+/// A registered, immutable schema migration.
+#[derive(Clone, Copy)]
+pub(crate) struct Migration {
+    pub(crate) version: i64,
+    pub(crate) name: &'static str,
+    pub(crate) sql: &'static str,
+}
 
 /// The current result of a registered migration.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -23,6 +33,14 @@ pub enum MigrationError {
     /// The selected operation is not implemented for the active backend.
     #[error("migration operation is not supported by the active database backend")]
     UnsupportedBackend,
+    /// The active database lacks a required feature.
+    #[error("database backend {backend} does not provide required capability {capability}")]
+    UnsupportedCapability {
+        /// Database backend being checked.
+        backend: &'static str,
+        /// Required capability that is unavailable.
+        capability: &'static str,
+    },
     /// An applied migration differs from the source currently registered in the binary.
     #[error(
         "migration checksum mismatch for version {version} ({name}): applied {applied}, registered {registered}"
@@ -51,4 +69,47 @@ pub enum MigrationError {
     Sqlx(#[from] sqlx::Error),
 }
 
+pub(crate) fn migration_checksum(name: &str, sql: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(name.as_bytes());
+    hasher.update([0]);
+    hasher.update(sql.as_bytes());
+
+    hasher
+        .finalize()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
+pub(crate) fn validate_registry(migrations: &[Migration]) -> Result<(), MigrationError> {
+    if migrations
+        .windows(2)
+        .any(|pair| pair[0].version >= pair[1].version)
+    {
+        return Err(MigrationError::InvalidRegistry);
+    }
+
+    Ok(())
+}
+
+pub(crate) fn verify_applied_migration(
+    migration: &Migration,
+    applied_name: &str,
+    applied_checksum: &str,
+    registered_checksum: &str,
+) -> Result<(), MigrationError> {
+    if applied_name != migration.name || applied_checksum != registered_checksum {
+        return Err(MigrationError::ChecksumMismatch {
+            version: migration.version,
+            name: migration.name.to_owned(),
+            applied: applied_checksum.to_owned(),
+            registered: registered_checksum.to_owned(),
+        });
+    }
+
+    Ok(())
+}
+
 pub(crate) use postgres::{postgres_migrate, postgres_migration_status};
+pub(crate) use sqlite::{sqlite_migrate, sqlite_migration_status};

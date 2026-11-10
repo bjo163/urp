@@ -28,8 +28,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     })
     .await?;
 
-    let should_dry_run = dry_run || status_only;
-    let migrations = database.migrate_postgres(should_dry_run).await?;
+    let migrations = if status_only {
+        database.migration_status().await?
+    } else {
+        database.migrate(dry_run).await?
+    };
 
     for migration in &migrations {
         let state = if migration.applied {
@@ -43,10 +46,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
-    if should_dry_run {
+    if dry_run || status_only {
         println!("No database schema changes were made.");
     } else {
-        println!("PostgreSQL migrations completed.");
+        println!("Database migrations completed for {}.", database.backend_name());
     }
 
     Ok(())

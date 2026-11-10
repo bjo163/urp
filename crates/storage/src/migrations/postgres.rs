@@ -1,13 +1,15 @@
 use std::collections::BTreeMap;
 
-use sha2::{Digest, Sha256};
 use sqlx::{
     Row,
     postgres::{PgPool, PgPoolOptions},
 };
 use uuid::Uuid;
 
-use super::{MigrationError, MigrationStatus};
+use super::{
+    Migration, MigrationError, MigrationStatus, migration_checksum, validate_registry,
+    verify_applied_migration,
+};
 
 const LEDGER_SQL: &str = r#"
 CREATE TABLE IF NOT EXISTS urp_schema_migrations (
@@ -19,13 +21,6 @@ CREATE TABLE IF NOT EXISTS urp_schema_migrations (
 "#;
 
 const MIGRATION_LOCK_KEY: i64 = 0x5552_505f_4d49_4752;
-
-#[derive(Clone, Copy)]
-struct Migration {
-    version: i64,
-    name: &'static str,
-    sql: &'static str,
-}
 
 const REGISTERED_MIGRATIONS: &[Migration] = &[Migration {
     version: 1,
@@ -168,48 +163,6 @@ async fn run_with_migrations(
     Ok(result)
 }
 
-fn validate_registry(migrations: &[Migration]) -> Result<(), MigrationError> {
-    if migrations
-        .windows(2)
-        .any(|pair| pair[0].version >= pair[1].version)
-    {
-        return Err(MigrationError::InvalidRegistry);
-    }
-
-    Ok(())
-}
-
-fn verify_applied_migration(
-    migration: &Migration,
-    applied_name: &str,
-    applied_checksum: &str,
-    registered_checksum: &str,
-) -> Result<(), MigrationError> {
-    if applied_name != migration.name || applied_checksum != registered_checksum {
-        return Err(MigrationError::ChecksumMismatch {
-            version: migration.version,
-            name: migration.name.to_owned(),
-            applied: applied_checksum.to_owned(),
-            registered: registered_checksum.to_owned(),
-        });
-    }
-
-    Ok(())
-}
-
-fn migration_checksum(name: &str, sql: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(name.as_bytes());
-    hasher.update([0]);
-    hasher.update(sql.as_bytes());
-
-    hasher
-        .finalize()
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect()
-}
-
 #[cfg(test)]
 mod tests {
     use std::{env, str::FromStr};
@@ -221,7 +174,8 @@ mod tests {
     use uuid::Uuid;
 
     use super::{
-        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate, run_with_migrations,
+        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate,
+        run_with_migrations,
     };
     use crate::MigrationError;
 

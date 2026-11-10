@@ -9,7 +9,8 @@ use sqlx::{
 use thiserror::Error;
 
 use crate::migrations::{
-    MigrationError, MigrationStatus, postgres_migrate, postgres_migration_status,
+    MigrationError, MigrationStatus, postgres_migrate, postgres_migration_status, sqlite_migrate,
+    sqlite_migration_status,
 };
 
 /// Configuration used to establish a database connection pool.
@@ -83,10 +84,26 @@ impl Database {
         Ok(())
     }
 
-    /// Applies registered PostgreSQL migrations explicitly.
+    /// Applies registered migrations for the active backend.
     ///
-    /// Use a dry run to inspect pending changes without writing schema or
-    /// migration-ledger data. This method is never called at API startup.
+    /// Set dry_run to true to inspect pending changes without writing schema
+    /// or migration-ledger data. This method is never called at API startup.
+    pub async fn migrate(&self, dry_run: bool) -> Result<Vec<MigrationStatus>, MigrationError> {
+        match self {
+            Self::Postgres(pool) => postgres_migrate(pool, dry_run).await,
+            Self::Sqlite(pool) => sqlite_migrate(pool, dry_run).await,
+        }
+    }
+
+    /// Returns migration state for the active backend without making changes.
+    pub async fn migration_status(&self) -> Result<Vec<MigrationStatus>, MigrationError> {
+        match self {
+            Self::Postgres(pool) => postgres_migration_status(pool).await,
+            Self::Sqlite(pool) => sqlite_migration_status(pool).await,
+        }
+    }
+
+    /// Applies registered PostgreSQL migrations explicitly.
     pub async fn migrate_postgres(
         &self,
         dry_run: bool,
@@ -97,11 +114,34 @@ impl Database {
         }
     }
 
+    /// Applies registered SQLite migrations explicitly.
+    pub async fn migrate_sqlite(
+        &self,
+        dry_run: bool,
+    ) -> Result<Vec<MigrationStatus>, MigrationError> {
+        match self {
+            Self::Sqlite(pool) => sqlite_migrate(pool, dry_run).await,
+            Self::Postgres(_) => Err(MigrationError::UnsupportedBackend),
+        }
+    }
+
     /// Returns PostgreSQL migration state without making database changes.
-    pub async fn migration_status_postgres(&self) -> Result<Vec<MigrationStatus>, MigrationError> {
+    pub async fn migration_status_postgres(
+        &self,
+    ) -> Result<Vec<MigrationStatus>, MigrationError> {
         match self {
             Self::Postgres(pool) => postgres_migration_status(pool).await,
             Self::Sqlite(_) => Err(MigrationError::UnsupportedBackend),
+        }
+    }
+
+    /// Returns SQLite migration state without making database changes.
+    pub async fn migration_status_sqlite(
+        &self,
+    ) -> Result<Vec<MigrationStatus>, MigrationError> {
+        match self {
+            Self::Sqlite(pool) => sqlite_migration_status(pool).await,
+            Self::Postgres(_) => Err(MigrationError::UnsupportedBackend),
         }
     }
 
