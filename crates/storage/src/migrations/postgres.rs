@@ -29,6 +29,11 @@ const REGISTERED_MIGRATIONS: &[Migration] = &[
         name: "0002_transactional_outbox",
         sql: include_str!("../../../../migrations/postgres/0002_transactional_outbox.sql"),
     },
+    Migration {
+        version: 3,
+        name: "0003_user_identity",
+        sql: include_str!("../../../../migrations/postgres/0003_user_identity.sql"),
+    },
 ];
 
 /// Applies pending PostgreSQL migrations, or returns a read-only dry-run plan.
