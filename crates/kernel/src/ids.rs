@@ -63,18 +63,36 @@ define_id!(CompanyId);
 define_id!(BranchId);
 define_id!(ModuleId);
 define_id!(ServiceId);
+define_id!(RecordId);
 
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
 
-    use super::{CompanyId, TenantId};
+    use super::{CompanyId, RecordId, TenantId};
 
     #[test]
     fn identifiers_round_trip_through_strings() {
         let id = TenantId::new();
         let parsed = TenantId::from_str(&id.to_string());
         assert_eq!(parsed.ok(), Some(id));
+    }
+
+    #[test]
+    fn record_id_serializes_as_a_stable_uuid_string() {
+        let id = RecordId::new();
+        let serialized = serde_json::to_string(&id);
+        assert!(serialized.is_ok());
+        let round_trip = serialized
+            .ok()
+            .and_then(|value| serde_json::from_str::<RecordId>(&value).ok());
+        assert_eq!(round_trip, Some(id));
+    }
+
+    #[test]
+    fn invalid_identifier_returns_a_typed_parse_error() {
+        let parsed = TenantId::from_str("not-a-uuid");
+        assert!(parsed.is_err());
     }
 
     #[test]
