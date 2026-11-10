@@ -323,9 +323,7 @@ mod tests {
         sqlx::query("DROP TABLE urp_auth_identities")
             .execute(&pool)
             .await?;
-        sqlx::query("DROP TABLE urp_users")
-            .execute(&pool)
-            .await?;
+        sqlx::query("DROP TABLE urp_users").execute(&pool).await?;
 
         sqlx::query("DROP TABLE urp_platform_metadata")
             .execute(&pool)
