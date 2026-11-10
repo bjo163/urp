@@ -59,6 +59,14 @@ mod tests {
         http::{Request, StatusCode, header},
         response::IntoResponse,
     };
+    use std::error::Error;
+
+    fn json_request(body: &'static str) -> Result<Request<Body>, axum::http::Error> {
+        Request::builder()
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+    }
     use serde::Deserialize;
     use serde_json::Value;
 
@@ -99,12 +107,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn validated_json_rejects_invalid_dto_with_field_paths() {
-        let request = Request::builder()
-            .method("POST")
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(r#"{"email":"invalid","name":" "}"#))
-            .expect("request builder should succeed");
+    async fn validated_json_rejects_invalid_dto_with_field_paths() -> Result<(), Box<dyn Error>> {
+        let request = json_request(r#"{"email":"invalid","name":" "}"#)?;
 
         let result = ValidatedJson::<CreateContact>::from_request(request, &()).await;
         assert!(result.is_err());
@@ -122,15 +126,12 @@ mod tests {
             value["error"]["field_errors"][0]["path"] == "email"
                 && value["error"]["field_errors"][1]["path"] == "name"
         }));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn validated_json_rejects_malformed_body_safely() {
-        let request = Request::builder()
-            .method("POST")
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from("{"))
-            .expect("request builder should succeed");
+    async fn validated_json_rejects_malformed_body_safely() -> Result<(), Box<dyn Error>> {
+        let request = json_request("{")?;
 
         let result = ValidatedJson::<CreateContact>::from_request(request, &()).await;
         assert!(result.is_err());
@@ -139,19 +140,15 @@ mod tests {
             .unwrap_or_else(ApiError::internal)
             .into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn validated_json_accepts_valid_dto() {
-        let request = Request::builder()
-            .method("POST")
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(
-                r#"{"email":"person@example.test","name":"Ada"}"#,
-            ))
-            .expect("request builder should succeed");
+    async fn validated_json_accepts_valid_dto() -> Result<(), Box<dyn Error>> {
+        let request = json_request(r#"{"email":"person@example.test","name":"Ada"}"#)?;
 
         let result = ValidatedJson::<CreateContact>::from_request(request, &()).await;
         assert!(result.is_ok());
+        Ok(())
     }
 }
