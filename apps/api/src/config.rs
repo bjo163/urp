@@ -8,8 +8,7 @@ pub struct ApiConfig {
 
 impl ApiConfig {
     pub fn from_env() -> Result<Self, ConfigError> {
-        let bind_address = env::var("URP_API_BIND")
-            .unwrap_or_else(|_| "0.0.0.0:8080".to_owned());
+        let bind_address = env::var("URP_API_BIND").unwrap_or_else(|_| "0.0.0.0:8080".to_owned());
         let log_filter = env::var("URP_LOG").unwrap_or_else(|_| "info".to_owned());
 
         Self::parse(&bind_address, &log_filter)
@@ -41,7 +40,10 @@ impl fmt::Display for ConfigError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidBindAddress(value) => {
-                write!(formatter, "URP_API_BIND is not a valid socket address: {value}")
+                write!(
+                    formatter,
+                    "URP_API_BIND is not a valid socket address: {value}"
+                )
             }
             Self::EmptyLogFilter => write!(formatter, "URP_LOG must not be empty"),
         }
