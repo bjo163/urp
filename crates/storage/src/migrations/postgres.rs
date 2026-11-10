@@ -34,6 +34,11 @@ const REGISTERED_MIGRATIONS: &[Migration] = &[
         name: "0003_user_identity",
         sql: include_str!("../../../../migrations/postgres/0003_user_identity.sql"),
     },
+    Migration {
+        version: 4,
+        name: "0004_auth_identity_status",
+        sql: include_str!("../../../../migrations/postgres/0004_auth_identity_status.sql"),
+    },
 ];
 
 /// Applies pending PostgreSQL migrations, or returns a read-only dry-run plan.
@@ -241,6 +246,7 @@ mod tests {
             },
             REGISTERED_MIGRATIONS[1],
             REGISTERED_MIGRATIONS[2],
+            REGISTERED_MIGRATIONS[3],
         ];
         let mismatch = run_with_migrations(&pool, &altered_migrations, false).await;
         assert!(matches!(
