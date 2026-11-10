@@ -1,6 +1,8 @@
 //! URP HTTP API process and composition root.
 
 mod config;
+mod errors;
+mod middleware;
 mod routes;
 mod state;
 
