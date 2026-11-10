@@ -6,7 +6,10 @@ use axum::{
 };
 use serde::de::DeserializeOwned;
 
-use crate::{errors::{ApiError, FieldError}, middleware::RequestTrace};
+use crate::{
+    errors::{ApiError, FieldError},
+    middleware::RequestTrace,
+};
 
 /// A request DTO that validates its own business-independent input constraints.
 pub trait ValidateRequest {
@@ -26,13 +29,15 @@ where
 
     async fn from_request(request: Request, state: &S) -> Result<Self, Self::Rejection> {
         let trace = request.extensions().get::<RequestTrace>().copied();
-        let Json(value) = Json::<T>::from_request(request, state).await.map_err(|rejection| {
-            let error = ApiError::from_json_rejection(rejection);
-            match trace {
-                Some(value) => error.with_request_id(value.request_id),
-                None => error,
-            }
-        })?;
+        let Json(value) = Json::<T>::from_request(request, state)
+            .await
+            .map_err(|rejection| {
+                let error = ApiError::from_json_rejection(rejection);
+                match trace {
+                    Some(value) => error.with_request_id(value.request_id),
+                    None => error,
+                }
+            })?;
 
         value.validate_request().map_err(|failures| {
             let error = ApiError::validation_failures(failures);
@@ -104,7 +109,10 @@ mod tests {
         let result = ValidatedJson::<CreateContact>::from_request(request, &()).await;
         assert!(result.is_err());
 
-        let response = result.err().unwrap_or_else(ApiError::internal).into_response();
+        let response = result
+            .err()
+            .unwrap_or_else(ApiError::internal)
+            .into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let bytes = axum::body::to_bytes(response.into_body(), 4096).await;
         let parsed = bytes
@@ -135,7 +143,9 @@ mod tests {
         let request = Request::builder()
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(r#"{"email":"person@example.test","name":"Ada"}"#))
+            .body(Body::from(
+                r#"{"email":"person@example.test","name":"Ada"}"#,
+            ))
             .expect("request builder should succeed");
 
         let result = ValidatedJson::<CreateContact>::from_request(request, &()).await;
