@@ -58,7 +58,9 @@ impl FixedClock {
             .instant
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let next = current.checked_add_signed(duration).ok_or(ClockError::Overflow)?;
+        let next = current
+            .checked_add_signed(duration)
+            .ok_or(ClockError::Overflow)?;
         *current = next;
         Ok(next)
     }
