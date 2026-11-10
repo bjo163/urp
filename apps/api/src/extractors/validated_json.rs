@@ -134,7 +134,10 @@ mod tests {
 
         let result = ValidatedJson::<CreateContact>::from_request(request, &()).await;
         assert!(result.is_err());
-        let response = result.err().unwrap_or_else(ApiError::internal).into_response();
+        let response = result
+            .err()
+            .unwrap_or_else(ApiError::internal)
+            .into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
 
