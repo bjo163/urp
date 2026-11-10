@@ -157,7 +157,6 @@ impl Database {
     }
 }
 
-
 #[cfg(test)]
 mod adapter_tests {
     use std::{
