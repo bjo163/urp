@@ -8,6 +8,8 @@ use sqlx::{
 };
 use thiserror::Error;
 
+use crate::transaction::StorageTransaction;
+
 use crate::migrations::{
     MigrationError, MigrationStatus, postgres_migrate, postgres_migration_status, sqlite_migrate,
     sqlite_migration_status,
@@ -89,6 +91,14 @@ impl Database {
         }
 
         Ok(())
+    }
+
+    /// Opens a transaction against the active backend.
+    pub async fn begin_transaction(&self) -> Result<StorageTransaction, StorageError> {
+        match self {
+            Self::Postgres(pool) => Ok(StorageTransaction::Postgres(pool.begin().await?)),
+            Self::Sqlite(pool) => Ok(StorageTransaction::Sqlite(pool.begin().await?)),
+        }
     }
 
     /// Applies registered migrations for the active backend.
@@ -180,10 +190,8 @@ mod adapter_tests {
     #[tokio::test]
     async fn sqlite_file_pool_connects_with_health_check() -> Result<(), Box<dyn Error>> {
         let path = temporary_sqlite_path();
-        let url = format!("sqlite://{}", path.display());
-
         let database = Database::connect(DatabaseConfig {
-            url,
+            url: format!("sqlite://{}", path.display()),
             max_connections: 1,
         })
         .await?;
@@ -194,7 +202,6 @@ mod adapter_tests {
         let _ = fs::remove_file(&path);
         let _ = fs::remove_file(path.with_extension("sqlite-shm"));
         let _ = fs::remove_file(path.with_extension("sqlite-wal"));
-
         Ok(())
     }
 
@@ -205,7 +212,6 @@ mod adapter_tests {
             max_connections: 1,
         })
         .await;
-
         assert!(matches!(result, Err(StorageError::UnsupportedScheme)));
     }
 
@@ -216,7 +222,6 @@ mod adapter_tests {
             max_connections: 0,
         })
         .await;
-
         assert!(matches!(result, Err(StorageError::InvalidMaxConnections)));
     }
 
@@ -226,7 +231,6 @@ mod adapter_tests {
         let Ok(url) = std::env::var("URP_TEST_DATABASE_URL") else {
             return Ok(());
         };
-
         let database = Database::connect(DatabaseConfig {
             url,
             max_connections: 2,
@@ -234,7 +238,6 @@ mod adapter_tests {
         .await?;
         assert_eq!(database.backend_name(), "postgresql");
         database.health_check().await?;
-
         Ok(())
     }
 }
