@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const plannedApps = [
   { code: "CRM", name: "Customer operations", detail: "Contacts, pipeline and sales" },
   { code: "SCM", name: "Supply chain", detail: "Purchasing, inventory and logistics" },
@@ -10,10 +12,10 @@ export default function HomePage() {
     <main className="screen">
       <div className="grain" aria-hidden="true" />
       <header className="topbar">
-        <a className="wordmark" href="/" aria-label="URP home">
+        <Link className="wordmark" href="/" aria-label="URP home">
           <span className="wordmark-mark">U</span>
           <span>URP<span className="wordmark-period">.</span></span>
-        </a>
+        </Link>
         <div className="topbar-meta">
           <span className="status-dot" />
           FOUNDATION BUILD
