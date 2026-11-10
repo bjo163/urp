@@ -75,16 +75,13 @@ async fn run_with_migrations(
         sqlx::query(LOCK_SQL).execute(pool).await?;
     }
 
-    let applied_rows =
-        if ledger_exists == 0 {
-            Vec::new()
-        } else {
-            sqlx::query(
-                "SELECT version, name, checksum FROM urp_schema_migrations ORDER BY version",
-            )
+    let applied_rows = if ledger_exists == 0 {
+        Vec::new()
+    } else {
+        sqlx::query("SELECT version, name, checksum FROM urp_schema_migrations ORDER BY version")
             .fetch_all(pool)
             .await?
-        };
+    };
 
     let mut applied = BTreeMap::new();
     for row in applied_rows {
@@ -203,18 +200,17 @@ async fn check_sqlite_capabilities(pool: &SqlitePool) -> Result<(), MigrationErr
 mod tests {
     use std::{env, fs, path::PathBuf};
 
-    use sqlx::{
-        SqliteConnectOptions, SqlitePoolOptions,
-    };
+    use sqlx::{SqliteConnectOptions, SqlitePoolOptions};
     use uuid::Uuid;
 
-    use super::{
-        Migration, REGISTERED_MIGRATIONS, check_sqlite_capabilities, run_with_migrations,
-    };
+    use super::{Migration, REGISTERED_MIGRATIONS, check_sqlite_capabilities, run_with_migrations};
     use crate::{Database, DatabaseConfig, MigrationError};
 
     fn temporary_database_path() -> PathBuf {
-        env::temp_dir().join(format!("urp_sqlite_migration_{}.db", Uuid::new_v4().simple()))
+        env::temp_dir().join(format!(
+            "urp_sqlite_migration_{}.db",
+            Uuid::new_v4().simple()
+        ))
     }
 
     #[tokio::test]

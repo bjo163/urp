@@ -126,9 +126,7 @@ impl Database {
     }
 
     /// Returns PostgreSQL migration state without making database changes.
-    pub async fn migration_status_postgres(
-        &self,
-    ) -> Result<Vec<MigrationStatus>, MigrationError> {
+    pub async fn migration_status_postgres(&self) -> Result<Vec<MigrationStatus>, MigrationError> {
         match self {
             Self::Postgres(pool) => postgres_migration_status(pool).await,
             Self::Sqlite(_) => Err(MigrationError::UnsupportedBackend),
@@ -136,9 +134,7 @@ impl Database {
     }
 
     /// Returns SQLite migration state without making database changes.
-    pub async fn migration_status_sqlite(
-        &self,
-    ) -> Result<Vec<MigrationStatus>, MigrationError> {
+    pub async fn migration_status_sqlite(&self) -> Result<Vec<MigrationStatus>, MigrationError> {
         match self {
             Self::Sqlite(pool) => sqlite_migration_status(pool).await,
             Self::Postgres(_) => Err(MigrationError::UnsupportedBackend),

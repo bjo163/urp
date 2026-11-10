@@ -49,7 +49,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if dry_run || status_only {
         println!("No database schema changes were made.");
     } else {
-        println!("Database migrations completed for {}.", database.backend_name());
+        println!(
+            "Database migrations completed for {}.",
+            database.backend_name()
+        );
     }
 
     Ok(())

@@ -174,8 +174,7 @@ mod tests {
     use uuid::Uuid;
 
     use super::{
-        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate,
-        run_with_migrations,
+        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate, run_with_migrations,
     };
     use crate::MigrationError;
 
