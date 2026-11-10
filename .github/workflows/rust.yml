@@ -30,6 +30,22 @@ jobs:
   rust:
     name: Format, lint and test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: urp_test
+          POSTGRES_USER: urp_test
+          POSTGRES_PASSWORD: urp_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U urp_test -d urp_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      URP_TEST_DATABASE_URL: postgresql://urp_test:urp_test_only@localhost:5432/urp_test
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
