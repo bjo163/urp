@@ -662,7 +662,8 @@ mod tests {
         let database = Database::connect(DatabaseConfig {
             url,
             max_connections: 3,
-        }).await?;
+        })
+        .await?;
         exercise_outbox(&database).await?;
         if let Database::Postgres(pool) = &database {
             sqlx::query("DROP TABLE urp_outbox_events")
