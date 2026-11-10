@@ -18,15 +18,18 @@ CREATE TABLE IF NOT EXISTS urp_schema_migrations (
 
 const MIGRATION_LOCK_KEY: i64 = 0x5552_505f_4d49_4752;
 
-const REGISTERED_MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "0001_platform_metadata",
-    sql: include_str!("../../../../migrations/postgres/0001_platform_metadata.sql"),
-}, Migration {
-    version: 2,
-    name: "0002_transactional_outbox",
-    sql: include_str!("../../../../migrations/postgres/0002_transactional_outbox.sql"),
-}];
+const REGISTERED_MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "0001_platform_metadata",
+        sql: include_str!("../../../../migrations/postgres/0001_platform_metadata.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "0002_transactional_outbox",
+        sql: include_str!("../../../../migrations/postgres/0002_transactional_outbox.sql"),
+    },
+];
 
 /// Applies pending PostgreSQL migrations, or returns a read-only dry-run plan.
 pub(crate) async fn postgres_migrate(
