@@ -2,7 +2,7 @@
 
 mod config;
 mod errors;
-mod extractors;
+pub mod extractors;
 mod middleware;
 mod routes;
 mod state;
