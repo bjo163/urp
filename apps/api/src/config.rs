@@ -24,11 +24,10 @@ impl ApiConfig {
             .ok_or(ConfigError::MissingDatabaseUrl)?;
 
         let port = parse_positive_u16("API_PORT", 8080)?;
-        let database_max_connections =
-            parse_positive_u32("DATABASE_MAX_CONNECTIONS", 10)?;
+        let database_max_connections = parse_positive_u32("DATABASE_MAX_CONNECTIONS", 10)?;
 
-        let log_filter = env::var("RUST_LOG")
-            .unwrap_or_else(|_| "info,sqlx=warn,hyper=warn".to_owned());
+        let log_filter =
+            env::var("RUST_LOG").unwrap_or_else(|_| "info,sqlx=warn,hyper=warn".to_owned());
 
         Ok(Self {
             database_url,
@@ -72,8 +71,7 @@ mod tests {
 
     #[test]
     fn default_pool_size_is_used_when_unset() {
-        assert!(parse_positive_u32("URP_TEST_MISSING_POOL_SIZE", 10)
-            .is_ok_and(|size| size == 10));
+        assert!(parse_positive_u32("URP_TEST_MISSING_POOL_SIZE", 10).is_ok_and(|size| size == 10));
     }
 
     #[test]
@@ -83,6 +81,9 @@ mod tests {
             .ok()
             .filter(|value| *value > 0)
             .ok_or(ConfigError::InvalidInteger("API_PORT"));
-        assert!(matches!(parsed, Err(ConfigError::InvalidInteger("API_PORT"))));
+        assert!(matches!(
+            parsed,
+            Err(ConfigError::InvalidInteger("API_PORT"))
+        ));
     }
 }

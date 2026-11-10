@@ -39,8 +39,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn init_tracing(filter: &str) {
-    let env_filter = EnvFilter::try_new(filter)
-        .unwrap_or_else(|_| EnvFilter::new("info,sqlx=warn,hyper=warn"));
+    let env_filter =
+        EnvFilter::try_new(filter).unwrap_or_else(|_| EnvFilter::new("info,sqlx=warn,hyper=warn"));
     tracing_subscriber::fmt()
         .json()
         .with_env_filter(env_filter)
@@ -52,7 +52,7 @@ fn init_tracing(filter: &str) {
 async fn shutdown_signal() {
     #[cfg(unix)]
     {
-        use tokio::signal::unix::{signal, SignalKind};
+        use tokio::signal::unix::{SignalKind, signal};
 
         let terminate = signal(SignalKind::terminate());
         match terminate {

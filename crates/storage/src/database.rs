@@ -40,9 +40,7 @@ pub enum StorageError {
 impl Database {
     /// Connects to a supported database and configures its pool.
     pub async fn connect(config: DatabaseConfig) -> Result<Self, StorageError> {
-        if config.url.starts_with("postgres://")
-            || config.url.starts_with("postgresql://")
-        {
+        if config.url.starts_with("postgres://") || config.url.starts_with("postgresql://") {
             let pool = PgPoolOptions::new()
                 .max_connections(config.max_connections)
                 .connect(&config.url)
