@@ -33,6 +33,11 @@ const REGISTERED_MIGRATIONS: &[Migration] = &[
         name: "0002_transactional_outbox",
         sql: include_str!("../../../../migrations/sqlite/0002_transactional_outbox.sql"),
     },
+    Migration {
+        version: 3,
+        name: "0003_user_identity",
+        sql: include_str!("../../../../migrations/sqlite/0003_user_identity.sql"),
+    },
 ];
 
 /// Applies pending SQLite migrations, or returns a read-only dry-run plan.
