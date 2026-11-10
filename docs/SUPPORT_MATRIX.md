@@ -24,8 +24,8 @@ Next.js 16.4.6 is the pinned App Router release in the current foundation depend
 
 | Database | Selected role | Validation status |
 |---|---|---|
-| PostgreSQL 18 | Production default target for multi-user and multi-node deployments | Required P02 compatibility lane; not yet claimed validated by the current P01 CI |
-| PostgreSQL 17 | Current local Compose and migration-test baseline | P02 migration workflow uses a dedicated test database on PostgreSQL 17 |
+| PostgreSQL 18 | Production default target for multi-user and multi-node deployments | Storage connection adapter is validated by P01 CI; migration/upgrade conformance is completed in P02 |
+| PostgreSQL 17 | Compatibility target | P02 migration workflow uses a dedicated test database on PostgreSQL 17 |
 | SQLite (SQLx bundled driver) | Embedded / single-host deployment only | P02 migration and transaction tests cover the file-backed adapter |
 
 ### PostgreSQL
