@@ -1,10 +1,6 @@
 mod health;
 
-use axum::{
-    Json, Router,
-    extract::Extension,
-    routing::get,
-};
+use axum::{Json, Router, extract::Extension, routing::get};
 use serde::Serialize;
 use tower_http::trace::TraceLayer;
 
