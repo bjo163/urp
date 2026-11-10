@@ -87,10 +87,7 @@ impl StorageTransaction {
     }
 
     /// Releases a previously created savepoint.
-    pub async fn release_savepoint(
-        &mut self,
-        savepoint: Savepoint,
-    ) -> Result<(), StorageError> {
+    pub async fn release_savepoint(&mut self, savepoint: Savepoint) -> Result<(), StorageError> {
         self.execute_static(savepoint.release_sql()).await
     }
 
