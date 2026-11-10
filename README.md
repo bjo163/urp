@@ -30,11 +30,12 @@ This is **foundation code, not a production ERP release**. Authentication, migra
 - [Issue map and execution order](docs/ISSUE_MAP.md)
 - [Development setup](docs/DEVELOPMENT.md)
 - [Support matrix](docs/SUPPORT_MATRIX.md)
+- [Threat model](docs/security/THREAT_MODEL.md)
 - [Contribution guide](CONTRIBUTING.md)
 
 ## Quick start
 
-Requirements: Rust 1.99.1, Node.js 24+, pnpm 12.17.0 and Docker Compose.
+Requirements: Rust 1.99.1, Node.js 26.x Active LTS, pnpm 12.17.0 and Docker Compose.
 
 ```sh
 cp .env.example .env
