@@ -54,7 +54,7 @@ pub struct ApiError {
 impl ApiError {
     /// Maps a kernel error to a stable HTTP status and public response.
     pub fn from_kernel(error: KernelError) -> Self {
-        if matches!(error, KernelError::Internal) {
+        if matches!(&error, KernelError::Internal) {
             return Self::internal();
         }
 
@@ -126,7 +126,15 @@ impl ApiError {
                     field_errors: None,
                 },
             ),
-            KernelError::Internal => unreachable!("internal error returned above"),
+            KernelError::Internal => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiErrorDetail {
+                    code: "internal_error",
+                    message: "An unexpected error occurred.".to_owned(),
+                    field: None,
+                    field_errors: None,
+                },
+            ),
         };
 
         Self {
