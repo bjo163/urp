@@ -55,11 +55,10 @@ async fn run_with_migrations(
 ) -> Result<Vec<MigrationStatus>, MigrationError> {
     validate_registry(migrations)?;
 
-    let ledger_exists: bool = sqlx::query_scalar(
-        "SELECT to_regclass('public.urp_schema_migrations') IS NOT NULL",
-    )
-    .fetch_one(pool)
-    .await?;
+    let ledger_exists: bool =
+        sqlx::query_scalar("SELECT to_regclass('public.urp_schema_migrations') IS NOT NULL")
+            .fetch_one(pool)
+            .await?;
 
     if !ledger_exists && dry_run {
         return Ok(migrations
@@ -77,11 +76,10 @@ async fn run_with_migrations(
         sqlx::query(LEDGER_SQL).execute(pool).await?;
     }
 
-    let applied_rows = sqlx::query(
-        "SELECT version, name, checksum FROM urp_schema_migrations ORDER BY version",
-    )
-    .fetch_all(pool)
-    .await?;
+    let applied_rows =
+        sqlx::query("SELECT version, name, checksum FROM urp_schema_migrations ORDER BY version")
+            .fetch_all(pool)
+            .await?;
 
     let mut applied = BTreeMap::new();
     for row in applied_rows {
@@ -92,7 +90,10 @@ async fn run_with_migrations(
     }
 
     for version in applied.keys() {
-        if !migrations.iter().any(|migration| migration.version == *version) {
+        if !migrations
+            .iter()
+            .any(|migration| migration.version == *version)
+        {
             return Err(MigrationError::UnknownAppliedMigration { version: *version });
         }
     }
@@ -103,12 +104,7 @@ async fn run_with_migrations(
         let checksum = migration_checksum(migration.name, migration.sql);
 
         if let Some((applied_name, applied_checksum)) = applied.get(&migration.version) {
-            verify_applied_migration(
-                migration,
-                applied_name,
-                applied_checksum,
-                &checksum,
-            )?;
+            verify_applied_migration(migration, applied_name, applied_checksum, &checksum)?;
             result.push(MigrationStatus {
                 version: migration.version,
                 name: migration.name.to_owned(),
@@ -134,22 +130,16 @@ async fn run_with_migrations(
             .execute(&mut *transaction)
             .await?;
 
-        let existing = sqlx::query(
-            "SELECT name, checksum FROM urp_schema_migrations WHERE version = $1",
-        )
-        .bind(migration.version)
-        .fetch_optional(&mut *transaction)
-        .await?;
+        let existing =
+            sqlx::query("SELECT name, checksum FROM urp_schema_migrations WHERE version = $1")
+                .bind(migration.version)
+                .fetch_optional(&mut *transaction)
+                .await?;
 
         if let Some(row) = existing {
             let applied_name: String = row.try_get("name")?;
             let applied_checksum: String = row.try_get("checksum")?;
-            verify_applied_migration(
-                migration,
-                &applied_name,
-                &applied_checksum,
-                &checksum,
-            )?;
+            verify_applied_migration(migration, &applied_name, &applied_checksum, &checksum)?;
         } else {
             sqlx::query(migration.sql)
                 .execute(&mut *transaction)
@@ -231,8 +221,7 @@ mod tests {
     use uuid::Uuid;
 
     use super::{
-        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate,
-        run_with_migrations,
+        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate, run_with_migrations,
     };
     use crate::MigrationError;
 
@@ -274,7 +263,9 @@ mod tests {
         async fn close(self) -> Result<(), Box<dyn std::error::Error>> {
             self.pool.close().await;
             let drop_database = format!("DROP DATABASE \"{}\"", self.database_name);
-            sqlx::query(&drop_database).execute(&self.admin_pool).await?;
+            sqlx::query(&drop_database)
+                .execute(&self.admin_pool)
+                .await?;
             self.admin_pool.close().await;
             Ok(())
         }
@@ -291,7 +282,10 @@ mod tests {
     #[test]
     fn migration_registry_is_ordered_and_unique() {
         assert!(super::validate_registry(REGISTERED_MIGRATIONS).is_ok());
-        assert_eq!(REGISTERED_MIGRATIONS.first().map(|item| item.version), Some(1));
+        assert_eq!(
+            REGISTERED_MIGRATIONS.first().map(|item| item.version),
+            Some(1)
+        );
     }
 
     #[tokio::test]
@@ -317,8 +311,7 @@ mod tests {
             name: "0001_platform_metadata",
             sql: "SELECT 1",
         }];
-        let mismatch =
-            run_with_migrations(&database.pool, &altered_migrations, false).await;
+        let mismatch = run_with_migrations(&database.pool, &altered_migrations, false).await;
         assert!(matches!(
             mismatch,
             Err(MigrationError::ChecksumMismatch { version: 1, .. })
