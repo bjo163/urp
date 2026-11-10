@@ -6,7 +6,7 @@ use axum::{
 };
 use serde::de::DeserializeOwned;
 
-use crate::errors::{ApiError, FieldError};
+use crate::{errors::{ApiError, FieldError}, middleware::RequestTrace};
 
 /// A request DTO that validates its own business-independent input constraints.
 pub trait ValidateRequest {
@@ -25,13 +25,22 @@ where
     type Rejection = ApiError;
 
     async fn from_request(request: Request, state: &S) -> Result<Self, Self::Rejection> {
-        let Json(value) = Json::<T>::from_request(request, state)
-            .await
-            .map_err(ApiError::from_json_rejection)?;
+        let trace = request.extensions().get::<RequestTrace>().copied();
+        let Json(value) = Json::<T>::from_request(request, state).await.map_err(|rejection| {
+            let error = ApiError::from_json_rejection(rejection);
+            match trace {
+                Some(value) => error.with_request_id(value.request_id),
+                None => error,
+            }
+        })?;
 
-        value
-            .validate_request()
-            .map_err(ApiError::validation_failures)?;
+        value.validate_request().map_err(|failures| {
+            let error = ApiError::validation_failures(failures);
+            match trace {
+                Some(value) => error.with_request_id(value.request_id),
+                None => error,
+            }
+        })?;
 
         Ok(Self(value))
     }
