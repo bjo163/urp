@@ -1,0 +1,67 @@
+name: Rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "apps/api/**"
+      - "crates/**"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "apps/api/**"
+      - "crates/**"
+      - ".github/workflows/rust.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Format, lint and test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: urp_test
+          POSTGRES_USER: urp_test
+          POSTGRES_PASSWORD: urp_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U urp_test -d urp_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      URP_TEST_DATABASE_URL: postgresql://urp_test:urp_test_only@localhost:5432/urp_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Run tests
+        run: cargo test --workspace
+      - name: Preserve generated lockfile for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: urp-cargo-lock
+          path: Cargo.lock
+          if-no-files-found: error
+          retention-days: 7
