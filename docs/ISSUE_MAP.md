@@ -27,6 +27,24 @@ This file maps the product blueprint to its executable GitHub backlog. Each issu
 
 - [#21](https://github.com/bjo163/urp/issues/21) was closed as a duplicate of [#20](https://github.com/bjo163/urp/issues/20). Keep #20 as the single PostgreSQL migration runner task.
 
+## Issue format and priority convention
+
+Every implementation task follows the repository issue template and includes:
+- Objective and bounded scope.
+- Relevant narrative/blueprint/engineering references.
+- Explicit specification and design rules.
+- Files and module ownership boundary.
+- Parent epic and numbered dependencies.
+- Checkbox acceptance criteria and validation plan.
+- Definition of done and autonomous-agent constraints.
+
+Priority prefixes in issue titles:
+- **P0** — foundational blocker, security boundary, core contract or release-critical prerequisite. Complete before dependent work.
+- **P1** — core product capability needed for the first coherent ERP workflows.
+- **P2** — advanced capability or expansion after its core contracts are stable.
+
+The priority prefix is an issue-title convention, not a GitHub label. Phase prefixes identify the owning roadmap phase. The "Blocked by" list is authoritative for readiness; priority alone never overrides dependencies.
+
 ## Execution order
 
 1. Complete P00 governance decisions and P01 reproducible developer workspace.
