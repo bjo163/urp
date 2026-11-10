@@ -259,17 +259,42 @@ INSERT INTO urp_outbox_events (
 ON CONFLICT (event_id) DO NOTHING
 "#;
 
-const PG_SELECT_COLUMNS: &str = r#"
-event_id, event_type, event_version, tenant_id, aggregate_type,
-aggregate_id, aggregate_version, actor_type, actor_id,
-occurred_at, correlation_id, payload::text AS payload_json,
-status, attempt_count
+const PG_FIND_BY_ID: &str = r#"
+SELECT event_id, event_type, event_version, tenant_id, aggregate_type,
+       aggregate_id, aggregate_version, actor_type, actor_id,
+       occurred_at, correlation_id, payload::text AS payload_json,
+       status, attempt_count
+FROM urp_outbox_events
+WHERE event_id = $1
 "#;
 
-const SQLITE_SELECT_COLUMNS: &str = r#"
-event_id, event_type, event_version, tenant_id, aggregate_type,
-aggregate_id, aggregate_version, actor_type, actor_id,
-occurred_at, correlation_id, payload_json, status, attempt_count
+const SQLITE_FIND_BY_ID: &str = r#"
+SELECT event_id, event_type, event_version, tenant_id, aggregate_type,
+       aggregate_id, aggregate_version, actor_type, actor_id,
+       occurred_at, correlation_id, payload_json, status, attempt_count
+FROM urp_outbox_events
+WHERE event_id = ?
+"#;
+
+const PG_PENDING_FOR_TENANT: &str = r#"
+SELECT event_id, event_type, event_version, tenant_id, aggregate_type,
+       aggregate_id, aggregate_version, actor_type, actor_id,
+       occurred_at, correlation_id, payload::text AS payload_json,
+       status, attempt_count
+FROM urp_outbox_events
+WHERE tenant_id = $1 AND status = 'pending'
+ORDER BY created_at, event_id
+LIMIT $2
+"#;
+
+const SQLITE_PENDING_FOR_TENANT: &str = r#"
+SELECT event_id, event_type, event_version, tenant_id, aggregate_type,
+       aggregate_id, aggregate_version, actor_type, actor_id,
+       occurred_at, correlation_id, payload_json, status, attempt_count
+FROM urp_outbox_events
+WHERE tenant_id = ? AND status = 'pending'
+ORDER BY created_at, event_id
+LIMIT ?
 "#;
 
 /// Append-only event repository. It never commits the caller's transaction.
@@ -314,9 +339,7 @@ impl OutboxRepository {
                     return Ok(AppendOutcome::Inserted);
                 }
 
-                let existing = sqlx::query(&format!(
-                    "SELECT {PG_SELECT_COLUMNS} FROM urp_outbox_events WHERE event_id = $1"
-                ))
+                let existing = sqlx::query(PG_FIND_BY_ID)
                 .bind(event.event_id)
                 .fetch_optional(&mut **inner)
                 .await?;
@@ -352,9 +375,7 @@ impl OutboxRepository {
                     return Ok(AppendOutcome::Inserted);
                 }
 
-                let existing = sqlx::query(&format!(
-                    "SELECT {SQLITE_SELECT_COLUMNS} FROM urp_outbox_events WHERE event_id = ?"
-                ))
+                let existing = sqlx::query(SQLITE_FIND_BY_ID)
                 .bind(event.event_id.to_string())
                 .fetch_optional(&mut **inner)
                 .await?;
@@ -379,20 +400,14 @@ impl OutboxRepository {
     ) -> Result<Option<EventRecord>, OutboxError> {
         match database {
             Database::Postgres(pool) => {
-                let sql = format!(
-                    "SELECT {PG_SELECT_COLUMNS} FROM urp_outbox_events WHERE event_id = $1"
-                );
-                let row = sqlx::query(&sql)
+                let row = sqlx::query(PG_FIND_BY_ID)
                     .bind(event_id)
                     .fetch_optional(pool)
                     .await?;
                 row.as_ref().map(decode_pg).transpose()
             }
             Database::Sqlite(pool) => {
-                let sql = format!(
-                    "SELECT {SQLITE_SELECT_COLUMNS} FROM urp_outbox_events WHERE event_id = ?"
-                );
-                let row = sqlx::query(&sql)
+                let row = sqlx::query(SQLITE_FIND_BY_ID)
                     .bind(event_id.to_string())
                     .fetch_optional(pool)
                     .await?;
@@ -416,10 +431,7 @@ impl OutboxRepository {
 
         match database {
             Database::Postgres(pool) => {
-                let sql = format!(
-                    "SELECT {PG_SELECT_COLUMNS} FROM urp_outbox_events                      WHERE tenant_id = $1 AND status = 'pending'                      ORDER BY created_at, event_id LIMIT $2"
-                );
-                let rows = sqlx::query(&sql)
+                let rows = sqlx::query(PG_PENDING_FOR_TENANT)
                     .bind(tenant_id)
                     .bind(i64::from(limit))
                     .fetch_all(pool)
@@ -427,10 +439,7 @@ impl OutboxRepository {
                 rows.iter().map(decode_pg).collect()
             }
             Database::Sqlite(pool) => {
-                let sql = format!(
-                    "SELECT {SQLITE_SELECT_COLUMNS} FROM urp_outbox_events                      WHERE tenant_id = ? AND status = 'pending'                      ORDER BY created_at, event_id LIMIT ?"
-                );
-                let rows = sqlx::query(&sql)
+                let rows = sqlx::query(SQLITE_PENDING_FOR_TENANT)
                     .bind(tenant_id.to_string())
                     .bind(i64::from(limit))
                     .fetch_all(pool)
