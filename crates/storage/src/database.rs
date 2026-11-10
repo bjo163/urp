@@ -32,6 +32,9 @@ pub enum StorageError {
     /// The configured URL is not a supported PostgreSQL or SQLite URL.
     #[error("DATABASE_URL uses an unsupported database scheme")]
     UnsupportedScheme,
+    /// The configured connection pool has an invalid size.
+    #[error("DATABASE_MAX_CONNECTIONS must be greater than zero")]
+    InvalidMaxConnections,
     /// The underlying SQLx operation failed.
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
@@ -40,6 +43,10 @@ pub enum StorageError {
 impl Database {
     /// Connects to a supported database and configures its pool.
     pub async fn connect(config: DatabaseConfig) -> Result<Self, StorageError> {
+        if config.max_connections == 0 {
+            return Err(StorageError::InvalidMaxConnections);
+        }
+
         if config.url.starts_with("postgres://") || config.url.starts_with("postgresql://") {
             let pool = PgPoolOptions::new()
                 .max_connections(config.max_connections)
@@ -88,22 +95,45 @@ impl Database {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
+    use std::{
+        error::Error,
+        fs,
+        path::PathBuf,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
     use super::{Database, DatabaseConfig, StorageError};
 
+    fn temporary_sqlite_path() -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or_default();
+
+        std::env::temp_dir().join(format!("urp-storage-{}-{nonce}.sqlite", std::process::id()))
+    }
+
     #[tokio::test]
-    async fn sqlite_pool_connects_and_passes_health_check() {
+    async fn sqlite_file_pool_connects_with_health_check() -> Result<(), Box<dyn Error>> {
+        let path = temporary_sqlite_path();
+        let url = format!("sqlite://{}", path.display());
+
         let database = Database::connect(DatabaseConfig {
-            url: "sqlite::memory:".to_owned(),
+            url,
             max_connections: 1,
         })
-        .await
-        .expect("in-memory SQLite should connect");
-
+        .await?;
         assert_eq!(database.backend_name(), "sqlite");
-        database.health_check().await.expect("SQLite health check should pass");
+        database.health_check().await?;
+
+        drop(database);
+        let _ = fs::remove_file(&path);
+        let _ = fs::remove_file(path.with_extension("sqlite-shm"));
+        let _ = fs::remove_file(path.with_extension("sqlite-wal"));
+
+        Ok(())
     }
 
     #[tokio::test]
@@ -118,22 +148,31 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn postgres_pool_connects_when_test_database_is_configured() {
+    async fn zero_pool_size_is_rejected() {
+        let result = Database::connect(DatabaseConfig {
+            url: "sqlite::memory:".to_owned(),
+            max_connections: 0,
+        })
+        .await;
+
+        assert!(matches!(result, Err(StorageError::InvalidMaxConnections)));
+    }
+
+    #[tokio::test]
+    async fn postgres_pool_connects_when_test_database_is_configured() -> Result<(), Box<dyn Error>>
+    {
         let Ok(url) = std::env::var("URP_TEST_DATABASE_URL") else {
-            return;
+            return Ok(());
         };
 
         let database = Database::connect(DatabaseConfig {
             url,
             max_connections: 2,
         })
-        .await
-        .expect("configured PostgreSQL test database should connect");
-
+        .await?;
         assert_eq!(database.backend_name(), "postgresql");
-        database
-            .health_check()
-            .await
-            .expect("PostgreSQL health check should pass");
+        database.health_check().await?;
+
+        Ok(())
     }
 }
