@@ -74,9 +74,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn health_live_is_available_without_database_query() -> Result<(), Box<dyn std::error::Error>> {
+    async fn health_live_is_available_without_database_query()
+    -> Result<(), Box<dyn std::error::Error>> {
         let app = test_router().await?;
-        let response = app.oneshot(Request::builder().uri("/health/live").body(Body::empty())?).await?;
+        let response = app
+            .oneshot(Request::builder().uri("/health/live").body(Body::empty())?)
+            .await?;
         assert_eq!(response.status(), StatusCode::OK);
         assert!(response.headers().contains_key("x-request-id"));
         Ok(())
@@ -85,7 +88,13 @@ mod tests {
     #[tokio::test]
     async fn health_ready_checks_database_dependency() -> Result<(), Box<dyn std::error::Error>> {
         let app = test_router().await?;
-        let response = app.oneshot(Request::builder().uri("/health/ready").body(Body::empty())?).await?;
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/health/ready")
+                    .body(Body::empty())?,
+            )
+            .await?;
         assert_eq!(response.status(), StatusCode::OK);
         Ok(())
     }
@@ -93,7 +102,9 @@ mod tests {
     #[tokio::test]
     async fn api_root_exposes_versioned_contract() -> Result<(), Box<dyn std::error::Error>> {
         let app = test_router().await?;
-        let response = app.oneshot(Request::builder().uri("/api/v1/").body(Body::empty())?).await?;
+        let response = app
+            .oneshot(Request::builder().uri("/api/v1/").body(Body::empty())?)
+            .await?;
         assert_eq!(response.status(), StatusCode::OK);
         let bytes = to_bytes(response.into_body(), 4096).await?;
         let json: Value = serde_json::from_slice(&bytes)?;
@@ -103,17 +114,27 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn not_found_uses_canonical_error_envelope_and_request_id() -> Result<(), Box<dyn std::error::Error>> {
+    async fn not_found_uses_canonical_error_envelope_and_request_id()
+    -> Result<(), Box<dyn std::error::Error>> {
         let app = test_router().await?;
         let request_id = Uuid::new_v4();
-        let response = app.oneshot(
-            Request::builder()
-                .uri("/api/v1/does-not-exist")
-                .header("x-request-id", request_id.to_string())
-                .body(Body::empty())?
-        ).await?;
+        let expected_request_id = request_id.to_string();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/does-not-exist")
+                    .header("x-request-id", expected_request_id.as_str())
+                    .body(Body::empty())?,
+            )
+            .await?;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
-        assert_eq!(response.headers().get("x-request-id").and_then(|v| v.to_str().ok()), Some(request_id.to_string().as_str()));
+        assert_eq!(
+            response
+                .headers()
+                .get("x-request-id")
+                .and_then(|value| value.to_str().ok()),
+            Some(expected_request_id.as_str())
+        );
         let bytes = to_bytes(response.into_body(), 4096).await?;
         let json: Value = serde_json::from_slice(&bytes)?;
         assert_eq!(json["error"]["code"], "not_found");
