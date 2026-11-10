@@ -15,6 +15,7 @@ tower-http.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 uuid.workspace = true
+utoipa.workspace = true
 urp-kernel = { path = "../../crates/kernel" }
 urp-storage = { path = "../../crates/storage" }
 
