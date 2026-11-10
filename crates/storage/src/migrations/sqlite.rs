@@ -22,11 +22,18 @@ CREATE TABLE IF NOT EXISTS urp_schema_migration_lock (
 )
 "#;
 
-const REGISTERED_MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "0001_platform_metadata",
-    sql: include_str!("../../../../migrations/sqlite/0001_platform_metadata.sql"),
-}];
+const REGISTERED_MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "0001_platform_metadata",
+        sql: include_str!("../../../../migrations/sqlite/0001_platform_metadata.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "0002_transactional_outbox",
+        sql: include_str!("../../../../migrations/sqlite/0002_transactional_outbox.sql"),
+    },
+];
 
 /// Applies pending SQLite migrations, or returns a read-only dry-run plan.
 pub(crate) async fn sqlite_migrate(
@@ -144,7 +151,8 @@ async fn run_with_migrations(
             let applied_checksum: String = row.try_get("checksum")?;
             verify_applied_migration(migration, &applied_name, &applied_checksum, &checksum)?;
         } else {
-            sqlx::query(migration.sql)
+            // Migration SQL is trusted, versioned source code. raw_sql is required for DDL scripts containing multiple statements.
+            sqlx::raw_sql(migration.sql)
                 .execute(&mut *transaction)
                 .await?;
 
@@ -245,11 +253,14 @@ mod tests {
             Database::Postgres(_) => return Err("expected SQLite database".into()),
         };
 
-        let altered_migrations = [Migration {
-            version: 1,
-            name: "0001_platform_metadata",
-            sql: "SELECT 1",
-        }];
+        let altered_migrations = [
+            Migration {
+                version: 1,
+                name: "0001_platform_metadata",
+                sql: "SELECT 1",
+            },
+            REGISTERED_MIGRATIONS[1],
+        ];
         let mismatch = run_with_migrations(&pool, &altered_migrations, false).await;
         assert!(matches!(
             mismatch,

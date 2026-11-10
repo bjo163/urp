@@ -18,11 +18,18 @@ CREATE TABLE IF NOT EXISTS urp_schema_migrations (
 
 const MIGRATION_LOCK_KEY: i64 = 0x5552_505f_4d49_4752;
 
-const REGISTERED_MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "0001_platform_metadata",
-    sql: include_str!("../../../../migrations/postgres/0001_platform_metadata.sql"),
-}];
+const REGISTERED_MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "0001_platform_metadata",
+        sql: include_str!("../../../../migrations/postgres/0001_platform_metadata.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "0002_transactional_outbox",
+        sql: include_str!("../../../../migrations/postgres/0002_transactional_outbox.sql"),
+    },
+];
 
 /// Applies pending PostgreSQL migrations, or returns a read-only dry-run plan.
 pub(crate) async fn postgres_migrate(
@@ -132,7 +139,8 @@ async fn run_with_migrations(
             let applied_checksum: String = row.try_get("checksum")?;
             verify_applied_migration(migration, &applied_name, &applied_checksum, &checksum)?;
         } else {
-            sqlx::query(migration.sql)
+            // Migration SQL is trusted, versioned source code. raw_sql is required for DDL scripts containing multiple statements.
+            sqlx::raw_sql(migration.sql)
                 .execute(&mut *transaction)
                 .await?;
 
@@ -219,11 +227,14 @@ mod tests {
         let second_run = postgres_migrate(&pool, false).await?;
         assert_eq!(second_run, first_run);
 
-        let altered_migrations = [Migration {
-            version: 1,
-            name: "0001_platform_metadata",
-            sql: "SELECT 1",
-        }];
+        let altered_migrations = [
+            Migration {
+                version: 1,
+                name: "0001_platform_metadata",
+                sql: "SELECT 1",
+            },
+            REGISTERED_MIGRATIONS[1],
+        ];
         let mismatch = run_with_migrations(&pool, &altered_migrations, false).await;
         assert!(matches!(
             mismatch,
@@ -234,7 +245,7 @@ mod tests {
             .fetch_one(&pool)
             .await?;
         let ledger_count: i64 = ledger_row.try_get("count")?;
-        assert_eq!(ledger_count, 1);
+        assert_eq!(ledger_count, REGISTERED_MIGRATIONS.len() as i64);
 
         sqlx::query("DROP TABLE urp_platform_metadata")
             .execute(&pool)
