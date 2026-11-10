@@ -4,15 +4,24 @@ use axum::{
 };
 use serde::Serialize;
 use urp_kernel::KernelError;
+use utoipa::ToSchema;
 
 use crate::{errors::ApiError, middleware::RequestTrace, state::AppState};
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct HealthResponse {
     status: &'static str,
     version: &'static str,
 }
 
+#[utoipa::path(
+    get,
+    path = "/health/live",
+    tag = "health",
+    responses(
+        (status = 200, description = "API process is alive", body = HealthResponse)
+    )
+)]
 pub async fn live(State(state): State<AppState>) -> Json<HealthResponse> {
     Json(HealthResponse {
         status: "live",
@@ -20,6 +29,15 @@ pub async fn live(State(state): State<AppState>) -> Json<HealthResponse> {
     })
 }
 
+#[utoipa::path(
+    get,
+    path = "/health/ready",
+    tag = "health",
+    responses(
+        (status = 200, description = "Required dependencies are ready", body = HealthResponse),
+        (status = 503, description = "A required dependency is unavailable", body = crate::errors::ApiErrorEnvelope)
+    )
+)]
 pub async fn ready(
     State(state): State<AppState>,
     Extension(trace): Extension<RequestTrace>,
