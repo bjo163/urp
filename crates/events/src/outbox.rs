@@ -109,7 +109,7 @@ impl EventEnvelope {
         if !valid_technical_name(&aggregate_type, false) {
             return Err(OutboxError::InvalidAggregateType);
         }
-        if event_version == 0 {
+        if event_version == 0 || event_version > i16::MAX as u16 {
             return Err(OutboxError::InvalidEventVersion);
         }
         if aggregate_version < 0 {
@@ -144,8 +144,14 @@ fn valid_technical_name(value: &str, allow_dots: bool) -> bool {
                     || character == '-'
                     || (allow_dots && character == '.')
             })
-        && !value.starts_with(['.', '-', '_'])
-        && !value.ends_with(['.', '-', '_'])
+        && !value
+            .chars()
+            .next()
+            .is_some_and(|character| matches!(character, '.' | '-' | '_'))
+        && !value
+            .chars()
+            .last()
+            .is_some_and(|character| matches!(character, '.' | '-' | '_'))
         && !value.contains("..")
 }
 
