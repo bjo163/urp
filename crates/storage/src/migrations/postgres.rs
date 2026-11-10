@@ -166,8 +166,7 @@ mod tests {
     use sqlx::{Row, postgres::PgPoolOptions};
 
     use super::{
-        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate,
-        run_with_migrations,
+        Migration, REGISTERED_MIGRATIONS, migration_checksum, postgres_migrate, run_with_migrations,
     };
     use crate::MigrationError;
 
@@ -201,11 +200,10 @@ mod tests {
             .connect(&database_url)
             .await?;
 
-        let ledger_exists: bool = sqlx::query_scalar(
-            "SELECT to_regclass('public.urp_schema_migrations') IS NOT NULL",
-        )
-        .fetch_one(&pool)
-        .await?;
+        let ledger_exists: bool =
+            sqlx::query_scalar("SELECT to_regclass('public.urp_schema_migrations') IS NOT NULL")
+                .fetch_one(&pool)
+                .await?;
         if ledger_exists {
             return Err("URP migration test database must be empty".into());
         }
