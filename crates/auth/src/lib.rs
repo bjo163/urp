@@ -1,11 +1,14 @@
-//! Authentication identity and credential metadata contracts.
-//!
-//! This crate does not implement password verification or session issuance.
-//! Those behaviors belong to separate application-layer capabilities.
+//! Authentication identity, password and login rate-limit contracts.
 
 mod identity;
+mod password;
+mod rate_limit;
 
 pub use identity::{
     AuthIdentity, CredentialMetadata, IdentityError, IdentityProvider, IdentityStatus,
     PasswordHashMetadata, UserAccount, UserStatus,
 };
+pub use password::{
+    EncodedPasswordHash, PasswordError, PasswordHashConfig, PasswordService,
+};
+pub use rate_limit::LoginRateLimiter;
