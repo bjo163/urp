@@ -13,8 +13,8 @@
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write \"apps/web/**/*.{ts,tsx,css,json,mjs}\" \"package.json\" \"tsconfig.base.json\" \"pnpm-workspace.yaml\" \"infra/compose/**/*.yml\" \".github/workflows/**/*.yml\"",
+    "format:check": "prettier --check \"apps/web/**/*.{ts,tsx,css,json,mjs}\" \"package.json\" \"tsconfig.base.json\" \"pnpm-workspace.yaml\" \"infra/compose/**/*.yml\" \".github/workflows/**/*.yml\"",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
