@@ -1,0 +1,17 @@
+{
+  "name": "urp",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.17.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @urp/web dev",
+    "build": "pnpm --filter @urp/web build",
+    "lint": "pnpm --filter @urp/web lint",
+    "typecheck": "pnpm --filter @urp/web typecheck",
+    "test:web": "pnpm --filter @urp/web test",
+    "check:web": "pnpm lint && pnpm typecheck && pnpm test:web && pnpm build"
+  }
+}
