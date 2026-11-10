@@ -140,7 +140,7 @@ async fn run_with_migrations(
             verify_applied_migration(migration, &applied_name, &applied_checksum, &checksum)?;
         } else {
             // Migration SQL is trusted, versioned source code. raw_sql is required for DDL scripts containing multiple statements.
-sqlx::raw_sql(migration.sql)
+            sqlx::raw_sql(migration.sql)
                 .execute(&mut *transaction)
                 .await?;
 
