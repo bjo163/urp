@@ -9,7 +9,7 @@
 |---|---|---|
 | Rust toolchain | 1.99.1 stable | Exact toolchain pinned in `rust-toolchain.toml`; update through a reviewed PR and full CI. Nightly is not supported for production. |
 | Node.js | 26.x Active LTS | 24.x Maintenance LTS may be added as a compatibility CI lane. Do not use odd/experimental or alpha lines in production. |
-| Package manager | pnpm 10.9.2 | Exact version recorded in root `package.json` `packageManager`; lockfile changes are reviewed. |
+| Package manager | pnpm 10.34.9 | Exact version recorded in root `package.json` `packageManager`; lockfile changes are reviewed. |
 | Next.js | 16.2.x App Router | Pin exact patch in lockfile. Do not float major versions. |
 | React | 19.2.x | Resolved version follows the supported Next.js release. |
 | TypeScript | 5.9.x | Strict mode enabled. |
@@ -25,7 +25,7 @@ Next.js 16.2 is the selected App Router baseline. The documented minimum Node.js
 |---|---|---|
 | PostgreSQL 18 | **Primary production target** | Required for multi-user, multi-node, high-write, HA and production workloads. |
 | PostgreSQL 17 | Compatibility target | Must pass the same persistence and migration contract tests before release support is claimed. |
-| SQLite 3.54.1 | **Supported single-host target** | Embedded/local/small single-host deployment only. CI verifies adapter and migration behavior. |
+| SQLite 3.54.1 | **Supported single-host target** | Embedded/local/small single-host deployment only. P02 adds CI adapter and migration tests before release support is claimed. |
 | PostgreSQL 19 | Not supported yet | Release candidate as of the baseline date; do not use as production baseline until GA and URP conformance validation. |
 
 PostgreSQL 18 and 17 are supported upstream release lines. PostgreSQL 19 GA is scheduled for 2026-11-19; on this baseline date it is still a release candidate. See the [PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/) and [PostgreSQL 19 RC announcement](https://www.postgresql.org/about/news/postgresql-19-rc-1-released-3409/).
@@ -66,7 +66,7 @@ Use the current stable release of Chrome, Edge, Firefox and Safari. The Next.js 
 ## Initial CI lanes
 
 - Required: Rust 1.99.1 on Linux x86_64.
-- Required: Node.js 26.x + pnpm 10.9.2 + Next.js 16.2.x.
-- Required as persistence arrives: PostgreSQL 18 and SQLite 3.54.1.
+- Required: Node.js 26.x + pnpm 10.34.9 + Next.js 16.2.x.
+- Assigned release-blocking persistence lane: PostgreSQL 18 and SQLite 3.54.1 (activated with P02 storage integration).
 - Follow-up compatibility lane: PostgreSQL 17 and Node.js 24.x.
 - Arm64 CI is follow-up work, not an assumed support claim.
