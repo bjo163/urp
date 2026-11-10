@@ -4,7 +4,7 @@
 
 - Git
 - Rust 1.99.1 (rustfmt and clippy components are installed by the repository toolchain file)
-- Node.js 24+
+- Node.js 26.x Active LTS
 - pnpm 12.17.0
 - Docker Engine with the Compose plugin
 
