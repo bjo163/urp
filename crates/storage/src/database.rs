@@ -87,3 +87,53 @@ impl Database {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::{Database, DatabaseConfig, StorageError};
+
+    #[tokio::test]
+    async fn sqlite_pool_connects_and_passes_health_check() {
+        let database = Database::connect(DatabaseConfig {
+            url: "sqlite::memory:".to_owned(),
+            max_connections: 1,
+        })
+        .await
+        .expect("in-memory SQLite should connect");
+
+        assert_eq!(database.backend_name(), "sqlite");
+        database.health_check().await.expect("SQLite health check should pass");
+    }
+
+    #[tokio::test]
+    async fn unsupported_database_scheme_is_rejected() {
+        let result = Database::connect(DatabaseConfig {
+            url: "mysql://user:pass@localhost/database".to_owned(),
+            max_connections: 1,
+        })
+        .await;
+
+        assert!(matches!(result, Err(StorageError::UnsupportedScheme)));
+    }
+
+    #[tokio::test]
+    async fn postgres_pool_connects_when_test_database_is_configured() {
+        let Ok(url) = std::env::var("URP_TEST_DATABASE_URL") else {
+            return;
+        };
+
+        let database = Database::connect(DatabaseConfig {
+            url,
+            max_connections: 2,
+        })
+        .await
+        .expect("configured PostgreSQL test database should connect");
+
+        assert_eq!(database.backend_name(), "postgresql");
+        database
+            .health_check()
+            .await
+            .expect("PostgreSQL health check should pass");
+    }
+}
