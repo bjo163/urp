@@ -20,7 +20,7 @@ pub enum UserStatus {
 }
 
 /// Identity provider family recorded for an authentication identity.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(transparent)]
 pub struct IdentityProvider(String);
 
