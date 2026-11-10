@@ -3,8 +3,7 @@ mod health;
 use axum::{
     Json, Router,
     extract::Extension,
-    http::{Request, StatusCode, header},
-    response::IntoResponse,
+    http::StatusCode,
     routing::get,
 };
 use serde::Serialize;
