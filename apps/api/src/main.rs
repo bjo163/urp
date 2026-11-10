@@ -11,6 +11,7 @@ use std::{error::Error, net::SocketAddr};
 
 use tokio::net::TcpListener;
 use tracing_subscriber::EnvFilter;
+use urp_auth::{LoginRateLimiter, PasswordHashConfig, PasswordService};
 use urp_storage::{Database, DatabaseConfig};
 
 use crate::{config::ApiConfig, state::AppState};
@@ -26,8 +27,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     })
     .await?;
 
+    let password_service = PasswordService::new(PasswordHashConfig {
+        memory_kib: config.password_memory_kib,
+        iterations: config.password_iterations,
+        parallelism: config.password_parallelism,
+        hash_version: 1,
+    })?;
     let state = AppState {
         database,
+        password_service,
+        login_rate_limiter: LoginRateLimiter::new(),
         version: env!("CARGO_PKG_VERSION"),
     };
     let app = routes::router(state);
@@ -36,7 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let listener = TcpListener::bind(address).await?;
     tracing::info!(%address, "URP API listening");
 
-    axum::serve(listener, app)
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 
