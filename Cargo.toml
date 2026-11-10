@@ -4,6 +4,7 @@ members = [
   "apps/api",
   "crates/kernel",
   "crates/storage",
+  "crates/events",
 ]
 
 [workspace.package]
