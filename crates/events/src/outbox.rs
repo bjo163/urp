@@ -167,15 +167,6 @@ pub enum EventStatus {
 }
 
 impl EventStatus {
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::Pending => "pending",
-            Self::Claimed => "claimed",
-            Self::Delivered => "delivered",
-            Self::Failed => "failed",
-        }
-    }
-
     fn parse(value: &str) -> Result<Self, OutboxError> {
         match value {
             "pending" => Ok(Self::Pending),
