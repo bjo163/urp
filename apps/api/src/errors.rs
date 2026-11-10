@@ -7,9 +7,10 @@ use axum::{
 use serde::Serialize;
 use urp_kernel::KernelError;
 use uuid::Uuid;
+use utoipa::ToSchema;
 
 /// Safe, machine-readable field validation detail.
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, ToSchema)]
 pub struct FieldError {
     /// JSON/request path for the invalid field.
     pub path: String,
@@ -20,7 +21,7 @@ pub struct FieldError {
 }
 
 /// Stable JSON error response returned by the HTTP application.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ApiErrorEnvelope {
     /// Error details.
     pub error: ApiErrorDetail,
@@ -29,7 +30,7 @@ pub struct ApiErrorEnvelope {
 }
 
 /// Machine-readable and safe public error details.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ApiErrorDetail {
     /// Stable error code.
     pub code: &'static str,
