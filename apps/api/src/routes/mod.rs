@@ -16,7 +16,6 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/health/live", get(health::live))
         .route("/health/ready", get(health::ready))
-        .route("/api/v1", get(api_root))
         .nest("/api/v1", api)
         .fallback(not_found)
         .layer(TraceLayer::new_for_http())
