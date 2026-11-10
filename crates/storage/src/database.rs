@@ -8,6 +8,8 @@ use sqlx::{
 };
 use thiserror::Error;
 
+use crate::transaction::StorageTransaction;
+
 use crate::migrations::{
     MigrationError, MigrationStatus, postgres_migrate, postgres_migration_status, sqlite_migrate,
     sqlite_migration_status,
@@ -82,6 +84,14 @@ impl Database {
         }
 
         Ok(())
+    }
+
+    /// Opens a transaction against the active backend.
+    pub async fn begin_transaction(&self) -> Result<StorageTransaction, StorageError> {
+        match self {
+            Self::Postgres(pool) => Ok(StorageTransaction::Postgres(pool.begin().await?)),
+            Self::Sqlite(pool) => Ok(StorageTransaction::Sqlite(pool.begin().await?)),
+        }
     }
 
     /// Applies registered migrations for the active backend.
