@@ -2,7 +2,7 @@
 
 This file maps the product blueprint to its executable GitHub backlog. Each issue contains its own scope, specification, design rules, dependencies, acceptance checklist and validation plan.
 
-**Current baseline:** 14 phase epics, 186 open implementation tasks, and 1 closed duplicate issue (201 total issues: 200 open, 1 closed). The repository is greenfield; the tasks are planned work, not completed functionality.
+**Current baseline:** 14 phase epics, 211 open implementation tasks, and 1 closed duplicate issue (226 total issues: 225 open, 1 closed). The repository is greenfield; the tasks are planned work, not completed functionality.
 
 ## Phase index
 
@@ -70,4 +70,4 @@ The priority prefix is an issue-title convention, not a GitHub label. Phase pref
 
 ## Counting convention
 
-Counts include open task issues only. Phase epics are not counted as tasks. The active backlog contains 186 task issues plus 14 phase epics (200 open issues). Closed issue #21 is excluded from the active task count. P06 and later phases include supplemental UI/domain tasks with non-contiguous issue numbers. Issue #21 is a closed duplicate; issue numbers are immutable and gaps are intentional.
+Counts include open task issues only. Phase epics are not counted as tasks. The active backlog contains 211 task issues plus 14 phase epics (225 open issues). Closed issue #21 is excluded from the active task count. P06 and later phases include supplemental UI/domain tasks with non-contiguous issue numbers. Issue #21 is a closed duplicate; issue numbers are immutable and gaps are intentional.
