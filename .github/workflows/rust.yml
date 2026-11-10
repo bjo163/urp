@@ -10,6 +10,7 @@ on:
       - "apps/api/**"
       - "crates/**"
       - ".github/workflows/rust.yml"
+      - "migrations/**"
   pull_request:
     paths:
       - "Cargo.toml"
@@ -18,6 +19,7 @@ on:
       - "apps/api/**"
       - "crates/**"
       - ".github/workflows/rust.yml"
+      - "migrations/**"
 
 permissions:
   contents: read
@@ -30,6 +32,22 @@ jobs:
   rust:
     name: Format, lint and test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: urp_ci
+          POSTGRES_USER: urp
+          POSTGRES_PASSWORD: urp_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U urp -d urp_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://urp:urp_ci_only@localhost:5432/urp_ci
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
