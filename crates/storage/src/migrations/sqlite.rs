@@ -22,15 +22,18 @@ CREATE TABLE IF NOT EXISTS urp_schema_migration_lock (
 )
 "#;
 
-const REGISTERED_MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "0001_platform_metadata",
-    sql: include_str!("../../../../migrations/sqlite/0001_platform_metadata.sql"),
-}, Migration {
-    version: 2,
-    name: "0002_transactional_outbox",
-    sql: include_str!("../../../../migrations/sqlite/0002_transactional_outbox.sql"),
-}];
+const REGISTERED_MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "0001_platform_metadata",
+        sql: include_str!("../../../../migrations/sqlite/0001_platform_metadata.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "0002_transactional_outbox",
+        sql: include_str!("../../../../migrations/sqlite/0002_transactional_outbox.sql"),
+    },
+];
 
 /// Applies pending SQLite migrations, or returns a read-only dry-run plan.
 pub(crate) async fn sqlite_migrate(
