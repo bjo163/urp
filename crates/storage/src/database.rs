@@ -8,6 +8,8 @@ use sqlx::{
 };
 use thiserror::Error;
 
+use crate::migrations::{MigrationError, MigrationStatus, postgres_migrate, postgres_migration_status};
+
 /// Configuration used to establish a database connection pool.
 #[derive(Clone, Debug)]
 pub struct DatabaseConfig {
@@ -77,6 +79,30 @@ impl Database {
         }
 
         Ok(())
+    }
+
+    /// Applies registered PostgreSQL migrations explicitly.
+    ///
+    /// Use a dry run to inspect pending changes without writing schema or
+    /// migration-ledger data. This method is never called at API startup.
+    pub async fn migrate_postgres(
+        &self,
+        dry_run: bool,
+    ) -> Result<Vec<MigrationStatus>, MigrationError> {
+        match self {
+            Self::Postgres(pool) => postgres_migrate(pool, dry_run).await,
+            Self::Sqlite(_) => Err(MigrationError::UnsupportedBackend),
+        }
+    }
+
+    /// Returns PostgreSQL migration state without making database changes.
+    pub async fn migration_status_postgres(
+        &self,
+    ) -> Result<Vec<MigrationStatus>, MigrationError> {
+        match self {
+            Self::Postgres(pool) => postgres_migration_status(pool).await,
+            Self::Sqlite(_) => Err(MigrationError::UnsupportedBackend),
+        }
     }
 
     /// Returns the stable backend identifier used in diagnostics.
