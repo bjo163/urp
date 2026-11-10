@@ -1,7 +1,6 @@
 use axum::{
     Json,
     extract::{Extension, State},
-    http::StatusCode,
 };
 use serde::Serialize;
 use urp_kernel::KernelError;
@@ -31,7 +30,12 @@ pub async fn ready(
             version: state.version,
         })),
         Err(error) => {
-            tracing::error!(%error, request_id = %trace.request_id, "database readiness check failed");
+            tracing::error!(
+                %error,
+                request_id = %trace.request_id,
+                correlation_id = %trace.correlation_id,
+                "database readiness check failed"
+            );
             Err(ApiError::from_kernel(KernelError::Unavailable).with_request_id(trace.request_id))
         }
     }
