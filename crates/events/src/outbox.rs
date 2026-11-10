@@ -135,15 +135,13 @@ impl EventEnvelope {
 fn valid_technical_name(value: &str, allow_dots: bool) -> bool {
     !value.is_empty()
         && value.len() <= 128
-        && value
-            .chars()
-            .all(|character| {
-                character.is_ascii_lowercase()
-                    || character.is_ascii_digit()
-                    || character == '_'
-                    || character == '-'
-                    || (allow_dots && character == '.')
-            })
+        && value.chars().all(|character| {
+            character.is_ascii_lowercase()
+                || character.is_ascii_digit()
+                || character == '_'
+                || character == '-'
+                || (allow_dots && character == '.')
+        })
         && !value
             .chars()
             .next()
@@ -296,7 +294,10 @@ impl OutboxRepository {
                 let result = sqlx::query(PG_INSERT)
                     .bind(event.event_id)
                     .bind(&event.event_type)
-                    .bind(i16::try_from(event.event_version).map_err(|_| OutboxError::InvalidEventVersion)?)
+                    .bind(
+                        i16::try_from(event.event_version)
+                            .map_err(|_| OutboxError::InvalidEventVersion)?,
+                    )
                     .bind(event.tenant_id)
                     .bind(&event.aggregate_type)
                     .bind(event.aggregate_id)
@@ -381,7 +382,10 @@ impl OutboxRepository {
                 let sql = format!(
                     "SELECT {PG_SELECT_COLUMNS} FROM urp_outbox_events WHERE event_id = $1"
                 );
-                let row = sqlx::query(&sql).bind(event_id).fetch_optional(pool).await?;
+                let row = sqlx::query(&sql)
+                    .bind(event_id)
+                    .fetch_optional(pool)
+                    .await?;
                 row.as_ref().map(decode_pg).transpose()
             }
             Database::Sqlite(pool) => {
@@ -511,7 +515,10 @@ fn decode_sqlite(row: &SqliteRow) -> Result<EventRecord, OutboxError> {
 #[cfg(test)]
 mod tests {
     use std::{
-        env, error::Error, fs, path::PathBuf,
+        env,
+        error::Error,
+        fs,
+        path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
 
@@ -561,9 +568,7 @@ mod tests {
         )?)
     }
 
-    async fn exercise_outbox(
-        database: &Database,
-    ) -> Result<(), Box<dyn Error>> {
+    async fn exercise_outbox(database: &Database) -> Result<(), Box<dyn Error>> {
         database.migrate(false).await?;
 
         let context = context()?;
@@ -576,7 +581,11 @@ mod tests {
             AppendOutcome::Inserted
         );
         rolled_back.rollback().await?;
-        assert!(OutboxRepository::find_by_id(database, event_id).await?.is_none());
+        assert!(
+            OutboxRepository::find_by_id(database, event_id)
+                .await?
+                .is_none()
+        );
 
         let mut committed = database.begin_transaction().await?;
         assert_eq!(
@@ -607,7 +616,8 @@ mod tests {
         ));
         conflict_tx.rollback().await?;
 
-        let pending = OutboxRepository::pending_for_tenant(database, envelope.tenant_id, 10).await?;
+        let pending =
+            OutboxRepository::pending_for_tenant(database, envelope.tenant_id, 10).await?;
         assert_eq!(pending.len(), 1);
         assert_eq!(pending[0].event.event_id, event_id);
         assert!(matches!(
@@ -630,7 +640,8 @@ mod tests {
         let database = Database::connect(DatabaseConfig {
             url: format!("sqlite://{}", path.display()),
             max_connections: 2,
-        }).await?;
+        })
+        .await?;
 
         exercise_outbox(&database).await?;
 
@@ -654,9 +665,15 @@ mod tests {
         }).await?;
         exercise_outbox(&database).await?;
         if let Database::Postgres(pool) = &database {
-            sqlx::query("DROP TABLE urp_outbox_events").execute(pool).await?;
-            sqlx::query("DROP TABLE urp_platform_metadata").execute(pool).await?;
-            sqlx::query("DROP TABLE urp_schema_migrations").execute(pool).await?;
+            sqlx::query("DROP TABLE urp_outbox_events")
+                .execute(pool)
+                .await?;
+            sqlx::query("DROP TABLE urp_platform_metadata")
+                .execute(pool)
+                .await?;
+            sqlx::query("DROP TABLE urp_schema_migrations")
+                .execute(pool)
+                .await?;
             pool.close().await;
         }
         Ok(())
