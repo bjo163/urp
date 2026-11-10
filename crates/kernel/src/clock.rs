@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn system_clock_returns_utc() {
         let now = SystemClock.now_utc();
-        assert_eq!(now.offset().local_minus_utc(), 0);
+        assert_eq!(now.offset(), &Utc);
     }
 
     struct DateTimeMax;
