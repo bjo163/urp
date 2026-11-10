@@ -340,9 +340,9 @@ impl OutboxRepository {
                 }
 
                 let existing = sqlx::query(PG_FIND_BY_ID)
-                .bind(event.event_id)
-                .fetch_optional(&mut **inner)
-                .await?;
+                    .bind(event.event_id)
+                    .fetch_optional(&mut **inner)
+                    .await?;
 
                 match existing {
                     Some(row) if decode_pg(&row)?.event == *event => {
@@ -376,9 +376,9 @@ impl OutboxRepository {
                 }
 
                 let existing = sqlx::query(SQLITE_FIND_BY_ID)
-                .bind(event.event_id.to_string())
-                .fetch_optional(&mut **inner)
-                .await?;
+                    .bind(event.event_id.to_string())
+                    .fetch_optional(&mut **inner)
+                    .await?;
 
                 match existing {
                     Some(row) if decode_sqlite(&row)?.event == *event => {
