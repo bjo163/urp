@@ -37,7 +37,7 @@ macro_rules! define_id {
 
         impl fmt::Display for $name {
             fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                self.0.fmt(formatter)
+                fmt::Display::fmt(&self.0, formatter)
             }
         }
 
@@ -62,6 +62,7 @@ define_id!(UserId);
 define_id!(CompanyId);
 define_id!(BranchId);
 define_id!(ModuleId);
+define_id!(ServiceId);
 
 #[cfg(test)]
 mod tests {
