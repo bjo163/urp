@@ -307,7 +307,10 @@ mod tests {
             .and_then(|value| serde_json::from_slice::<Value>(&value).ok());
         assert!(parsed.is_some_and(|value| {
             value["error"]["code"] == "invalid_json"
-                && !value["error"]["message"].as_str().unwrap_or_default().contains("serde")
+                && !value["error"]["message"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .contains("serde")
         }));
     }
 
@@ -331,19 +334,45 @@ mod tests {
     #[tokio::test]
     async fn every_kernel_error_has_a_stable_status_and_code() {
         let cases = [
-            (KernelError::NotFound, axum::http::StatusCode::NOT_FOUND, "not_found"),
-            (KernelError::Conflict, axum::http::StatusCode::CONFLICT, "conflict"),
-            (KernelError::Forbidden, axum::http::StatusCode::FORBIDDEN, "forbidden"),
-            (KernelError::Unauthenticated, axum::http::StatusCode::UNAUTHORIZED, "unauthenticated"),
-            (KernelError::RateLimited, axum::http::StatusCode::TOO_MANY_REQUESTS, "rate_limited"),
-            (KernelError::Unavailable, axum::http::StatusCode::SERVICE_UNAVAILABLE, "unavailable"),
+            (
+                KernelError::NotFound,
+                axum::http::StatusCode::NOT_FOUND,
+                "not_found",
+            ),
+            (
+                KernelError::Conflict,
+                axum::http::StatusCode::CONFLICT,
+                "conflict",
+            ),
+            (
+                KernelError::Forbidden,
+                axum::http::StatusCode::FORBIDDEN,
+                "forbidden",
+            ),
+            (
+                KernelError::Unauthenticated,
+                axum::http::StatusCode::UNAUTHORIZED,
+                "unauthenticated",
+            ),
+            (
+                KernelError::RateLimited,
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "rate_limited",
+            ),
+            (
+                KernelError::Unavailable,
+                axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                "unavailable",
+            ),
         ];
 
         for (error, expected_status, expected_code) in cases {
             let response = ApiError::from_kernel(error).into_response();
             assert_eq!(response.status(), expected_status);
             let body = to_bytes(response.into_body(), 4096).await;
-            let parsed = body.ok().and_then(|value| serde_json::from_slice::<Value>(&value).ok());
+            let parsed = body
+                .ok()
+                .and_then(|value| serde_json::from_slice::<Value>(&value).ok());
             assert!(parsed.is_some_and(|value| value["error"]["code"] == expected_code));
         }
     }
