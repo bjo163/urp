@@ -2,16 +2,16 @@
 
 This file maps the product blueprint to its executable GitHub backlog. Each issue contains its own scope, specification, design rules, dependencies, acceptance checklist and validation plan.
 
-**Current baseline:** 14 phase epics, 211 open implementation tasks, and 1 closed duplicate issue (226 total issues: 225 open, 1 closed). The repository is greenfield; the tasks are planned work, not completed functionality.
+**Current baseline:** 14 phase epics, 196 open implementation tasks, 16 closed issues (15 completed tasks and 1 duplicate), for 226 total issues (210 open, 16 closed). The repository is greenfield; the tasks are planned work, not completed functionality.
 
 ## Phase index
 
 | Phase | Epic | Tasks | Count | Scope |
 |---|---:|---|---:|---|
-| P00 | [#1 Governance](https://github.com/bjo163/urp/issues/1) | [#2–#4](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP00%5D+in%3Atitle) | 3 | License, threat model, supported matrix |
-| P01 | [#5 Workspace](https://github.com/bjo163/urp/issues/5) | [#6–#13](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP01%5D+in%3Atitle) | 8 | Rust/Next.js workspace, CI, local development |
-| P02 | [#14 Kernel/API](https://github.com/bjo163/urp/issues/14) | [#15–#20, #22–#28, #74](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP02%5D+in%3Atitle) | 14 | IDs, errors, context, storage, migrations, API, OpenAPI, SDK, outbox |
-| P03 | [#29 Identity/Security](https://github.com/bjo163/urp/issues/29) | [#30–#38, #154](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP03%5D+in%3Atitle) | 10 | Users, sessions, tenant/org, policies, audit, service credentials |
+| P00 | [#1 Governance](https://github.com/bjo163/urp/issues/1) | [#2](https://github.com/bjo163/urp/issues/2) | 1 open / 2 done | License decision pending; threat model and support matrix complete |
+| P01 | [#5 Workspace](https://github.com/bjo163/urp/issues/5) | [#6–#13](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP01%5D+in%3Atitle) | 8 open | Foundation PR merged; lockfiles and remaining reproducibility acceptance still open |
+| P02 | [#14 Kernel/API](https://github.com/bjo163/urp/issues/14) | [#27–#28](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP02%5D+in%3Atitle) | 2 open / 12 done | Core kernel, SQLx adapters, migrations, transactions, API boundary and outbox merged; OpenAPI/TS SDK pending |
+| P03 | [#29 Identity/Security](https://github.com/bjo163/urp/issues/29) | [#31–#38, #154](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP03%5D+in%3Atitle) | 9 open / 1 done | User identity schema merged; login, sessions, memberships and authorization pending |
 | P04 | [#39 ORM](https://github.com/bjo163/urp/issues/39) | [#40–#52](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP04%5D+in%3Atitle) | 13 | Metadata, registry, relations, query AST/compilers, CRUD, lifecycle, compute, schema plans, policy integration |
 | P05 | [#53 Module Runtime](https://github.com/bjo163/urp/issues/53) | [#54–#62](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP05%5D+in%3Atitle) | 9 | Manifest, dependencies, install/upgrade/disable, registrations, SDK |
 | P06 | [#63 Radical UI](https://github.com/bjo163/urp/issues/63) | [#64–#73, #177–#188, #202–#218](https://github.com/bjo163/urp/issues?q=is%3Aissue+is%3Aopen+%5BP06%5D+in%3Atitle) | 39 | Tokens, components, admin screens, app workspaces, accessibility |
@@ -70,4 +70,4 @@ The priority prefix is an issue-title convention, not a GitHub label. Phase pref
 
 ## Counting convention
 
-Counts include open task issues only. Phase epics are not counted as tasks. The active backlog contains 211 task issues plus 14 phase epics (225 open issues). Closed issue #21 is excluded from the active task count. P06 and later phases include supplemental UI/domain tasks with non-contiguous issue numbers. Issue #21 is a closed duplicate; issue numbers are immutable and gaps are intentional.
+Counts show open tasks unless marked otherwise. Phase epics are tracked separately. The active backlog contains 196 open implementation tasks plus 14 open epics (210 open issues). Fifteen implementation tasks are closed as completed; #21 is one additional closed duplicate. P06 and later phases include supplemental UI/domain tasks with non-contiguous issue numbers.
